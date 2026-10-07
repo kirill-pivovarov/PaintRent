@@ -1,44 +1,29 @@
-import os
+from os import getenv
+from typing import AsyncGenerator
 
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-
-load_dotenv()
-
-
-def _env(name: str) -> str:
-    """Читает переменную окружения или падает с понятной ошибкой."""
-    value = os.getenv(name)
-    if not value:
-        raise RuntimeError(
-            f"Переменная {name!r} не задана. Проверь файл .env (см. .env.example)."
-        )
-    return value
 
 
 DATABASE_URL = (
-    f"postgresql+psycopg2://"
-    f"{_env('DB_USER')}:{_env('DB_PASSWORD')}"
-    f"@{_env('DB_HOST')}:{_env('DB_PORT')}/{_env('DB_NAME')}"
+    f"postgresql+asyncpg://"
+    f"{getenv('DB_USER')}:{getenv('DB_PASSWORD')}"
+    f"@{getenv('DB_HOST')}:{getenv('DB_PORT')}/{getenv('DB_NAME')}"
 )
 
-engine = create_engine(DATABASE_URL,
+engine = create_async_engine(DATABASE_URL,
                        echo=False,
                        future=True,
                        pool_pre_ping=True)
 
-SessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     autoflush=False,
     expire_on_commit=False,
+    class_=AsyncSession
 )
 
 
-def get_db():
-    """Сессия БД. Для FastAPI (Depends) и для скриптов (with SessionLocal())."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session
