@@ -35,10 +35,6 @@ SessionLocal = sessionmaker(
 )
 
 
-class Base(DeclarativeBase):
-    pass
-
-
 def get_db():
     """Сессия БД. Для FastAPI (Depends) и для скриптов (with SessionLocal())."""
     db = SessionLocal()
