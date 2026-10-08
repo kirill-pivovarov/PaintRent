@@ -18,3 +18,10 @@ class BaseCRUD:
     ) -> Optional[ModelType]:
         return await db.get(entity, id)
     
+    async def delete(
+        self,
+        db: AsyncSession,
+        obj: Base
+    ):
+        await db.delete(obj)
+        await db.commit()
