@@ -23,5 +23,18 @@ class BaseCRUD:
         db: AsyncSession,
         obj: Base
     ):
+        if obj == None:
+            return
         await db.delete(obj)
         await db.commit()
+
+
+    async def update(
+        self,
+        db: AsyncSession,
+        obj: ModelType
+    ) -> ModelType:
+        merged_obj = await db.merge(obj)
+        await db.commit()
+        await db.refresh(merged_obj)
+        return merged_obj
