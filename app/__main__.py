@@ -7,7 +7,7 @@ from app.db.crud.order import OrderCRUD
 from .db.connection import get_db, AsyncSessionLocal
 from .db.crud import UserCRUD, UserRole
 from .db.connection import engine
-from .db.model import Base, User, OrderStatus
+from .db.model import Base, User, OrderStatus, Order
 
 
 async def check_user_crud(db: AsyncSession) -> UUID:
@@ -41,14 +41,14 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID) -> None:
     print(f"  ✓ Создан заказ id={order.id}, статус={order.status.value}")
     order_id = order.id
 
-    found = await crud.get_by_id(db, order_id)
+    found = await crud.get_by_id(db, Order, order_id)
     if found is None:
         print("  ❌ Заказ не найден")
         return
     print(f"  ✓ Найден: id={found.id}, статус={found.status.value}, "
           f"customer_id={found.customer_id}")
 
-    updated = await crud.update(
+    updated = await crud.update_order(
         db,
         order_id=order_id,
         status=OrderStatus.CONFIRMED,
@@ -59,11 +59,11 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID) -> None:
     print(f"  ✓ Новый статус: {updated.status.value}")
 
     # ---------- DELETE ----------
-    ok = await crud.delete(db, order_id)
+    ok = await crud.delete(db, order)
     print(f"  ✓ Удаление: {'успешно' if ok else 'не удалось'}")
 
     # Проверка, что удалился
-    after = await crud.get_by_id(db, order_id)
+    after = await crud.get_by_id(db, Order,  order_id)
     print(f"  ✓ Заказ после удаления: {after} (ожидаем None)")
 
 

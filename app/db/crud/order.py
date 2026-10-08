@@ -26,7 +26,7 @@ class OrderCRUD(BaseCRUD):
         return order
 
 
-    async def update(self,
+    async def update_order(self,
                            db: AsyncSession,
                            order_id: UUID,
                            **kwargs) -> Order | None:
@@ -37,4 +37,4 @@ class OrderCRUD(BaseCRUD):
         )
 
         await db.commit()
-        return await self.get_by_id(db, order_id)
+        return await self.get_by_id(db, Order, order_id)
