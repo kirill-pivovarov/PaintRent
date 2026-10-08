@@ -33,7 +33,6 @@ class UserCRUD(BaseCRUD):
         await db.refresh(user)
         print(user.id)
 
-
         if role == UserRole.CLIENT:
             profile = ClientProfile(
                 user_id=user.id,
@@ -50,3 +49,13 @@ class UserCRUD(BaseCRUD):
         await db.commit()
 
         return user
+
+    async def get_by_email(
+        self,
+        db: AsyncSession,
+        email: str
+    ) -> User:
+        stmt = select(User).where(User.email == email)
+        return await db.scalar(stmt)
+
+    
