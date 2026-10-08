@@ -140,7 +140,7 @@ class Painting(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     author: Mapped[str] = mapped_column(String(255), nullable=False)
     creation_year: Mapped[Optional[int]] = mapped_column(Integer)
-
+    # description
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     rent_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
 
@@ -172,7 +172,7 @@ class Order(Base):
     )
 
     status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus, name="order_status_enum"),
+        SQLEnum(OrderStatus, name="order_st"),
         default=OrderStatus.CREATED, 
         nullable=False
     )
