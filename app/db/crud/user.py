@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID, uuid4
 
-from app.db.model import User, ClientProfile, PartnerProfile, UserRole
+from app.db.model import User, ClientProfile, PartnerProfile, UserRole, Cart
 from app.db.crud.base import BaseCRUD
 from app.core import hash_password, verify_password
 
@@ -27,27 +27,21 @@ class UserCRUD(BaseCRUD):
             surname=surname,
             role=role
         )
-        print(user.id)
-        db.add(user)
-        await db.flush()
-        await db.refresh(user)
-        print(user.id)
 
         if role == UserRole.CLIENT:
-            profile = ClientProfile(
-                user_id=user.id,
-                phone_number=phone_number
-            )
+            user.client_profile = ClientProfile(phone_number=phone_number)
         elif role == UserRole.PARTNER:
-            profile = PartnerProfile(
-                user_id=user.id,
+            user.partner_profile = PartnerProfile(
                 phone_number=phone_number,
-                company_name=company_name
+                company_name=company_name,
+                address=address
             )
 
-        db.add(profile)
-        await db.commit()
+        user.cart = Cart()
 
+        db.add(user)
+        await db.flush() 
+        await db.refresh(user)
         return user
 
     async def get_by_email(

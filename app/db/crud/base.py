@@ -26,7 +26,7 @@ class BaseCRUD:
         if obj == None:
             return
         await db.delete(obj)
-        await db.commit()
+        await db.flush()
 
 
     async def update(
@@ -35,6 +35,6 @@ class BaseCRUD:
         obj: ModelType
     ) -> ModelType:
         merged_obj = await db.merge(obj)
-        await db.commit()
+        await db.flush()
         await db.refresh(merged_obj)
         return merged_obj
