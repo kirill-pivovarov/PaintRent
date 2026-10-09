@@ -9,6 +9,8 @@ from app.db.model import Base
 ModelType = TypeVar("ModelType", bound=Base)
 
 class BaseCRUD:
+    def __init__(self, model: Type[ModelType]):
+        self.model = model
 
     async def get_by_id(
         self,
@@ -26,7 +28,7 @@ class BaseCRUD:
         if obj is None:
             return False
         await db.delete(obj)
-        await db.flush()
+        return True
 
 
     async def update(
@@ -37,6 +39,6 @@ class BaseCRUD:
         if obj is None:
             raise ValueError("update: obj is None")
         merged_obj = await db.merge(obj)
-        await db.flush()
+
         await db.refresh(merged_obj)
         return merged_obj

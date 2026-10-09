@@ -8,6 +8,9 @@ from app.db.crud.base import BaseCRUD
 
 
 class OrderCRUD(BaseCRUD):
+    def __init__(self):
+        super().__init__(Order)
+
     async def create(self,
                      db: AsyncSession,
                      *,
@@ -20,7 +23,6 @@ class OrderCRUD(BaseCRUD):
         await db.flush()
         await db.refresh(order)
 
-        await db.commit()
         return order
 
 
@@ -34,5 +36,4 @@ class OrderCRUD(BaseCRUD):
             .values(**kwargs)
         )
 
-        await db.commit()
         return await self.get_by_id(db, Order, order_id)

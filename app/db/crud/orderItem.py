@@ -10,6 +10,8 @@ from app.db.crud.base import BaseCRUD
 
 class OrderItemCRUD(BaseCRUD):
     model = OrderItem
+    def __init__(self):
+        super().__init__(OrderItem)
 
     async def create(
         self,
@@ -30,7 +32,7 @@ class OrderItemCRUD(BaseCRUD):
         db.add(item)
         await db.flush()
         await db.refresh(item)
-        await db.commit()
+
         return item
 
 
@@ -42,7 +44,7 @@ class OrderItemCRUD(BaseCRUD):
         if obj is None:
             raise ValueError("update: obj is None")
         merged = await db.merge(obj)
-        await db.commit()
+
         await db.refresh(merged)
         return merged
 
@@ -62,7 +64,7 @@ class OrderItemCRUD(BaseCRUD):
         )
 
         updated_id = result.scalar_one_or_none()
-        await db.commit()
+
         if updated_id is None:
             return None
         return await self.get_by_id(db, OrderItem, updated_id)

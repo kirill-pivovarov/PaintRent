@@ -7,6 +7,8 @@ from app.db.crud.base import BaseCRUD
 from app.core import hash_password, verify_password
 
 class UserCRUD(BaseCRUD):
+    def __init__(self):
+        super().__init__(User)
 
     async def create(
         self,

@@ -8,12 +8,14 @@ from app.db.crud.order import OrderCRUD
 from app.db.crud.orderItem import OrderItemCRUD
 from app.db.crud.painting import PaintingCRUD, painting_list_available
 from .db.connection import get_db, AsyncSessionLocal
-from .db.crud import UserCRUD, UserRole
+from .db.crud import UserCRUD, UserRole, CartCRUD
 from .db.connection import engine
-from .db.model import Base, User, OrderStatus, Order, PaintingStatus, Painting, OrderItemType, OrderItem
+from .db.model import Base, User, OrderStatus, Order, PaintingStatus, Painting, OrderItemType, OrderItem, Cart
 
 
+# USER
 async def check_user_crud(db: AsyncSession) -> UUID:
+    # Создать/Удалить/Обновить
     print("1. UserCRUD — создание пользователя\n")
 
     crud = UserCRUD()
@@ -31,7 +33,6 @@ async def check_user_crud(db: AsyncSession) -> UUID:
     )
     print(f"  Создан: {user.name} {user.surname}  id={user.id}")
     return user.id
-
 
 async def create_partner(db: AsyncSession) -> UUID:
     print("\n2. UserCRUD — создание партнёра\n")
@@ -58,7 +59,72 @@ async def create_partner(db: AsyncSession) -> UUID:
     return partner.id
 
 
+#CART
+async def check_cart_crud(
+    db: AsyncSession,
+    user_id: UUID,
+    painting_ids: list[UUID],
+):
+    print("\n6. CartCRUD — работа с корзиной\n")
+
+    crud = CartCRUD()
+
+    # ---------- CREATE ----------
+    # у каждого клиента ровно одна корзина
+    cart = await crud.get_by_user_id(db, user_id)
+    if cart is None:
+        cart = Cart(user_id=user_id)
+        db.add(cart)
+        await db.flush()
+        print(f"    Создана корзина id={cart.id}")
+    else:
+        print(f"    Корзина уже есть: id={cart.id}")
+
+    # ---------- ADD ITEMS ----------
+    print(f"\n    Добавляем картины ({len(painting_ids)} шт.):")
+    for pid in painting_ids:
+        painting = await db.get(Painting, pid)
+        if painting is None:
+            print(f"    Картина {pid} не найдена — пропускаем")
+            continue
+        item = await crud.add_item(db, cart, painting)
+        print(f"      + {painting.title} (позиция id={item.id})")
+
+    # ---------- READ ----------
+    items = await crud.get_items(db, cart)
+    print(f"\n    Позиций в корзине: {len(items)}")
+    for it in items:
+        print(f"      - {it.painting.title} ({it.painting.author})")
+
+    # ---------- REMOVE ONE ----------
+    if painting_ids:
+        victim_id = painting_ids[0]
+        victim = await db.get(Painting, victim_id)
+        ok = await crud.remove_item(db, cart, victim_id)
+        print(f"\n    Удаляем позицию '{victim.title}': "
+              f"{'успешно' if ok else 'не найдена'}")
+
+        items = await crud.get_items(db, cart)
+        print(f"    Осталось позиций: {len(items)}")
+
+    # ---------- CLEAR ----------
+    await crud.clear_cart(db, cart)
+    items = await crud.get_items(db, cart)
+    print(f"\n    После clear_cart: {len(items)} позиций (ожидаем 0)")
+
+    # ---------- DELETE CART ----------
+    ok = await crud.delete_cart(db, cart)
+    print(f"    Удаление корзины: {'успешно' if ok else 'не удалось'}")
+
+    cart_after = await crud.get_by_user_id(db, user_id)
+    print(f"    Корзина после удаления: {cart_after} (ожидаем None)")
+
+    return cart
+
+
+# ORDER
 async def check_order_crud(db: AsyncSession, customer_id: UUID):
+    # Создаем, добавляем/удаляем OrderItem, удалить заказ, история заказов пользователя
     crud = OrderCRUD()
     print("\n4. OrderCRUD — работа с заказами\n")
     # CREATE
@@ -67,8 +133,9 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID):
         customer_id=customer_id,
         status=OrderStatus.CREATED,
     )
-    print(f"   Создан заказ id={order.id}, статус={order.status.value}")
+    print(f"Создан заказ id={order.id}, статус={order.status.value}")
     order_id = order.id
+
 
     found = await crud.get_by_id(db, Order, order_id)
     if found is None:
@@ -101,8 +168,9 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID):
     # print(f"    Заказ после удаления: {after} (ожидаем None)")
     return order_id
 
-
+# PAINTING
 async def check_painting_crud(db: AsyncSession, partner_id: UUID) -> UUID:
+    # Создать, отредактировать, удалить, список всех картин партнера, список доступных картин
     print("\n3. PaintingCRUD — работа с картинами\n")
     crud = PaintingCRUD()
 
@@ -146,7 +214,7 @@ async def check_painting_crud(db: AsyncSession, partner_id: UUID) -> UUID:
 
     return painting_id
 
-
+# ORDER_ITEM
 async def check_order_item_crud(
     db: AsyncSession,
     order_id: UUID,
@@ -207,6 +275,14 @@ async def main():
             customer_id = await check_user_crud(db)
             partner_id = await create_partner(db)
             painting_id = await check_painting_crud(db, partner_id)
+
+            # ---- КОРЗИНА ----
+            await check_cart_crud(
+                db,
+                user_id=customer_id,
+                painting_ids=[painting_id],
+            )
+
             order_id = await check_order_crud(db, customer_id)
 
             await check_order_item_crud(db, order_id, painting_id)

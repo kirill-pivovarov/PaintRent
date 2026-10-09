@@ -13,8 +13,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# --- ENUMS ---
-
+# ENUMS
 class UserRole(str, Enum):
     CLIENT = "CLIENT"
     PARTNER = "PARTNER"
@@ -45,8 +44,7 @@ class OrderItemType(str, Enum):
     PURCHASE = "PURCHASE"
 
 
-# --- MODELS ---
-
+# MODELS
 class User(Base):
     __tablename__ = "users"
 
