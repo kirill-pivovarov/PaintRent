@@ -1,8 +1,8 @@
-"""initial
+"""init
 
-Revision ID: 3e53ec29eff2
+Revision ID: 82153c9653f0
 Revises: 
-Create Date: 2026-10-09 05:22:13.185470
+Create Date: 2026-10-09 07:05:43.777810
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3e53ec29eff2'
+revision: str = '82153c9653f0'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,15 +36,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
-    op.create_table('carts',
-    sa.Column('id', sa.Uuid(), nullable=False),
-    sa.Column('user_id', sa.Uuid(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', NOW())"), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', NOW())"), nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('user_id')
-    )
     op.create_table('client_profiles',
     sa.Column('user_id', sa.Uuid(), nullable=False),
     sa.Column('phone_number', sa.String(length=20), nullable=True),
@@ -58,6 +49,15 @@ def upgrade() -> None:
     sa.Column('address', sa.String(length=255), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('user_id')
+    )
+    op.create_table('carts',
+    sa.Column('id', sa.Uuid(), nullable=False),
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', NOW())"), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), server_default=sa.text("TIMEZONE('utc', NOW())"), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['client_profiles.user_id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
     )
     op.create_table('orders',
     sa.Column('id', sa.Uuid(), nullable=False),
@@ -126,9 +126,9 @@ def downgrade() -> None:
     op.drop_table('paintings')
     op.drop_index(op.f('ix_orders_customer_id'), table_name='orders')
     op.drop_table('orders')
+    op.drop_table('carts')
     op.drop_table('partner_profiles')
     op.drop_table('client_profiles')
-    op.drop_table('carts')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
     # ### end Alembic commands ###

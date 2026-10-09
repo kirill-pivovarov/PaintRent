@@ -83,9 +83,7 @@ class User(Base):
     partner_profile: Mapped[Optional["PartnerProfile"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
-    cart: Mapped[Optional["Cart"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan", uselist=False
-    )
+    
 
 
 class ClientProfile(Base):
@@ -101,6 +99,10 @@ class ClientProfile(Base):
     user: Mapped["User"] = relationship(back_populates="client_profile")
     orders: Mapped[List["Order"]] = relationship(
         back_populates="client", cascade="all, delete-orphan"
+    )
+
+    cart: Mapped[Optional["Cart"]] = relationship(
+            back_populates="user", cascade="all, delete-orphan", uselist=False
     )
 
 
@@ -225,7 +227,7 @@ class Cart(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey("client_profiles.user_id", ondelete="CASCADE"),
         unique=True
     )
 
@@ -238,7 +240,7 @@ class Cart(Base):
     )
 
     # --- Relationships ---
-    user: Mapped["User"] = relationship(back_populates="cart")
+    user: Mapped["ClientProfile"] = relationship(back_populates="cart")
     items: Mapped[List["CartItem"]] = relationship(
         back_populates="cart",
         cascade="all, delete-orphan",
