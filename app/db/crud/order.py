@@ -1,11 +1,9 @@
-from dataclasses import dataclass
-from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.model import Painting, Order, OrderStatus
+from app.db.model import Order, OrderStatus
 from app.db.crud.base import BaseCRUD
 
 
