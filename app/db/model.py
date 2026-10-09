@@ -229,7 +229,7 @@ class Cart(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey("client_profiles.user_id", ondelete="CASCADE"),
         unique=True
     )
 
@@ -242,7 +242,7 @@ class Cart(Base):
     )
 
     # --- Relationships ---
-    user: Mapped["User"] = relationship(back_populates="cart")
+    user: Mapped["ClientProfile"] = relationship(back_populates="cart")
     items: Mapped[List["CartItem"]] = relationship(
         back_populates="cart",
         cascade="all, delete-orphan",
