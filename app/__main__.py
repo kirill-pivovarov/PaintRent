@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.crud.order import OrderCRUD
 from app.db.crud.orderItem import OrderItemCRUD
 from app.db.crud.painting import PaintingCRUD, painting_list_available
-from .db.connection import get_db, AsyncSessionLocal
+from .db.connection import AsyncSessionLocal
 from .db.crud import UserCRUD, UserRole, CartCRUD
 from .db.connection import engine
 from .db.model import Base, User, OrderStatus, Order, PaintingStatus, Painting, OrderItemType, OrderItem, Cart
@@ -33,6 +33,8 @@ async def check_user_crud(db: AsyncSession) -> UUID:
     )
     print(f"  Создан: {user.name} {user.surname}  id={user.id}")
     return user.id
+
+
 
 async def create_partner(db: AsyncSession) -> UUID:
     print("\n2. UserCRUD — создание партнёра\n")
@@ -111,13 +113,6 @@ async def check_cart_crud(
     await crud.clear_cart(db, cart)
     items = await crud.get_items(db, cart)
     print(f"\n    После clear_cart: {len(items)} позиций (ожидаем 0)")
-
-    # ---------- DELETE CART ----------
-    ok = await crud.delete_cart(db, cart)
-    print(f"    Удаление корзины: {'успешно' if ok else 'не удалось'}")
-
-    cart_after = await crud.get_by_user_id(db, user_id)
-    print(f"    Корзина после удаления: {cart_after} (ожидаем None)")
 
     return cart
 

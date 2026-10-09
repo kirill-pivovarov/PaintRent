@@ -1,10 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from uuid import UUID, uuid4
 
 from app.db.model import User, ClientProfile, PartnerProfile, UserRole, Cart
 from app.db.crud.base import BaseCRUD
-from app.core import hash_password, verify_password
+from app.core import hash_password
 
 class UserCRUD(BaseCRUD):
     def __init__(self):

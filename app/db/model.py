@@ -6,7 +6,7 @@ import uuid
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import (String, Enum as SQLEnum, text, ForeignKey, Numeric, UniqueConstraint,
-                        DateTime, Integer, Boolean, func)
+                        DateTime, Integer, Boolean)
 
 from app.db.mixins import UUIDMixin, TimestampMixin
 
@@ -59,15 +59,15 @@ class User(UUIDMixin, TimestampMixin, Base):
     
     role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole, name="user_st"))
 
-    is_active: Mapped[bool] = mapped_column(
-        Boolean, default=True, nullable=False, server_default="true"
-    )
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    is_anonymized: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False, server_default="false"
-    )
+    # is_active: Mapped[bool] = mapped_column(
+    #     Boolean, default=True, nullable=False, server_default="true"
+    # )
+    # deleted_at: Mapped[datetime | None] = mapped_column(
+    #     DateTime(timezone=True), nullable=True
+    # )
+    # is_anonymized: Mapped[bool] = mapped_column(
+    #     Boolean, default=False, nullable=False, server_default="false"
+    # )
 
     # --- Relationships ---
     client_profile: Mapped[Optional["ClientProfile"]] = relationship(

@@ -1,7 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from typing import TypeVar, Type, Optional
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from app.db.model import Base
 

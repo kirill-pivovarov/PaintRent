@@ -70,14 +70,3 @@ class CartCRUD(BaseCRUD):
         result = await db.execute(stmt)
         return list(result.scalars().all())
 
-    async def delete_cart(
-            self,
-            db: AsyncSession,
-            cart: Cart,
-    ) -> bool:
-        """Удалить корзину целиком (с позициями — каскадно)."""
-        if cart is None:
-            return False
-        await db.delete(cart)
-        await db.flush()
-        return True
