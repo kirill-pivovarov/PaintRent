@@ -10,6 +10,8 @@ from app.db.crud.base import BaseCRUD
 
 class OrderItemCRUD(BaseCRUD):
     model = OrderItem
+    def __init__(self):
+        super().__init__(OrderItem)
 
     async def create(
         self,

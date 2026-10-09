@@ -9,6 +9,8 @@ from app.db.model import Base
 ModelType = TypeVar("ModelType", bound=Base)
 
 class BaseCRUD:
+    def __init__(self, model: Type[ModelType]):
+        self.model = model
 
     async def get_by_id(
         self,

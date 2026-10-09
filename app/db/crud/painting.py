@@ -19,6 +19,8 @@ async def painting_list_available(db: AsyncSession) -> list[Painting]:
 
 class PaintingCRUD(BaseCRUD):
     model = Painting
+    def __init__(self):
+        super().__init__(Painting)
 
     async def create(
         self,

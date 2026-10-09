@@ -12,8 +12,9 @@ from .db.crud import UserCRUD, UserRole
 from .db.connection import engine
 from .db.model import Base, User, OrderStatus, Order, PaintingStatus, Painting, OrderItemType, OrderItem
 
-
+# USER
 async def check_user_crud(db: AsyncSession) -> UUID:
+    # Создать/Удалить/Обновить
     print("1. UserCRUD — создание пользователя\n")
 
     crud = UserCRUD()
@@ -31,7 +32,6 @@ async def check_user_crud(db: AsyncSession) -> UUID:
     )
     print(f"  Создан: {user.name} {user.surname}  id={user.id}")
     return user.id
-
 
 async def create_partner(db: AsyncSession) -> UUID:
     print("\n2. UserCRUD — создание партнёра\n")
@@ -58,7 +58,15 @@ async def create_partner(db: AsyncSession) -> UUID:
     return partner.id
 
 
+#CART
+async def check_cart_crud(db: AsyncSession):
+    # Отчистить (добавить/ удалить все CartItem)
+    pass
+
+
+# ORDER
 async def check_order_crud(db: AsyncSession, customer_id: UUID):
+    # Создаем, добавляем/удаляем OrderItem, удалить заказ, история заказов пользователя
     crud = OrderCRUD()
     print("\n4. OrderCRUD — работа с заказами\n")
     # CREATE
@@ -67,8 +75,9 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID):
         customer_id=customer_id,
         status=OrderStatus.CREATED,
     )
-    print(f"   Создан заказ id={order.id}, статус={order.status.value}")
+    print(f"Создан заказ id={order.id}, статус={order.status.value}")
     order_id = order.id
+
 
     found = await crud.get_by_id(db, Order, order_id)
     if found is None:
@@ -101,8 +110,9 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID):
     # print(f"    Заказ после удаления: {after} (ожидаем None)")
     return order_id
 
-
+# PAINTING
 async def check_painting_crud(db: AsyncSession, partner_id: UUID) -> UUID:
+    # Создать, отредактировать, удалить, список всех картин партнера, список доступных картин
     print("\n3. PaintingCRUD — работа с картинами\n")
     crud = PaintingCRUD()
 
@@ -146,7 +156,7 @@ async def check_painting_crud(db: AsyncSession, partner_id: UUID) -> UUID:
 
     return painting_id
 
-
+# ORDER_ITEM
 async def check_order_item_crud(
     db: AsyncSession,
     order_id: UUID,

@@ -8,6 +8,9 @@ from app.db.crud.base import BaseCRUD
 
 
 class OrderCRUD(BaseCRUD):
+    def __init__(self):
+        super().__init__(Order)
+
     async def create(self,
                      db: AsyncSession,
                      *,
