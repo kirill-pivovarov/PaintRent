@@ -8,6 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import (String, Enum as SQLEnum, text, ForeignKey, Numeric, UniqueConstraint,
                         DateTime, Integer, Boolean, func)
 
+from app.db.mixins import UUIDMixin, TimestampMixin
 
 class Base(DeclarativeBase):
     pass
@@ -45,11 +46,11 @@ class OrderItemType(str, Enum):
 
 
 # MODELS
-class User(Base):
+class User(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    
+    #id, created_at, updated_at из миксинов
+
     email: Mapped[str] = mapped_column(String(150), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
     
@@ -66,14 +67,6 @@ class User(Base):
     )
     is_anonymized: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, server_default="false"
-    )
-    
-    created_at: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE('utc', NOW())")
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE('utc', NOW())"), 
-        onupdate=datetime.now                          
     )
 
     # --- Relationships ---
@@ -127,10 +120,11 @@ class PartnerProfile(Base):
     )
 
 
-class Painting(Base):
+class Painting(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "paintings"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    #id, created_at, updated_at из миксинов
+
     partner_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("partner_profiles.user_id", ondelete="CASCADE"),
         nullable=False, 
@@ -160,10 +154,10 @@ class Painting(Base):
     cart_items: Mapped[List["CartItem"]] = relationship(back_populates="painting")
 
 
-class Order(Base):
+class Order(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "orders"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    #id, created_at, updated_at из миксинов
     customer_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("client_profiles.user_id", ondelete="RESTRICT"), 
         nullable=False, 
@@ -178,11 +172,6 @@ class Order(Base):
 
     total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0.0)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), 
-        server_default=func.now()
-    )
-
     # --- Relationships ---
     client: Mapped["ClientProfile"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(
@@ -191,11 +180,11 @@ class Order(Base):
     )
 
 
-class OrderItem(Base):
+class OrderItem(UUIDMixin, Base):
     __tablename__ = "order_items"
     __table_args__ = (UniqueConstraint("order_id", "painting_id"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    # id
     order_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("orders.id", ondelete="CASCADE"), 
         nullable=False
@@ -222,21 +211,13 @@ class OrderItem(Base):
     painting: Mapped["Painting"] = relationship(back_populates="order_items")
 
 
-class Cart(Base):
+class Cart(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "carts"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    #id, created_at, updated_at из миксинов
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("client_profiles.user_id", ondelete="CASCADE"),
         unique=True
-    )
-
-    created_at: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE('utc', NOW())")
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE('utc', NOW())"),
-        onupdate=datetime.now,
     )
 
     # --- Relationships ---
@@ -248,11 +229,11 @@ class Cart(Base):
     )
 
 
-class CartItem(Base):
+class CartItem(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "cart_items"
     __table_args__ = (UniqueConstraint("cart_id", "painting_id"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    # id, created_at, updated_at из миксинов
 
     cart_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("carts.id", ondelete="CASCADE"),
@@ -270,10 +251,6 @@ class CartItem(Base):
 
     rental_begin_date: Mapped[Optional[date]] = mapped_column()
     rental_end_date: Mapped[Optional[date]] = mapped_column()
-
-    created_at: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE('utc', NOW())")
-    )
 
     # --- Relationships ---
     cart: Mapped["Cart"] = relationship(back_populates="items")
