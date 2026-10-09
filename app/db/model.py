@@ -58,7 +58,7 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(100))
     surname: Mapped[str] = mapped_column(String(100))
     
-    role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole, name="user_role_enum"))
+    role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole, name="user_st"))
 
     is_active: Mapped[bool] = mapped_column(
         Boolean, default=True, nullable=False, server_default="true"
@@ -140,7 +140,7 @@ class Painting(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     author: Mapped[str] = mapped_column(String(255), nullable=False)
     creation_year: Mapped[Optional[int]] = mapped_column(Integer)
-
+    # description
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     rent_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
 
@@ -171,7 +171,7 @@ class Order(Base):
     )
 
     status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus, name="order_status_enum"),
+        SQLEnum(OrderStatus, name="order_st"),
         default=OrderStatus.CREATED, 
         nullable=False
     )
