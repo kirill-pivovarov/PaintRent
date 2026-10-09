@@ -13,8 +13,7 @@ class Base(DeclarativeBase):
     pass
 
 
-# --- ENUMS ---
-
+# ENUMS
 class UserRole(str, Enum):
     CLIENT = "CLIENT"
     PARTNER = "PARTNER"
@@ -45,8 +44,7 @@ class OrderItemType(str, Enum):
     PURCHASE = "PURCHASE"
 
 
-# --- MODELS ---
-
+# MODELS
 class User(Base):
     __tablename__ = "users"
 
@@ -147,7 +145,6 @@ class Painting(Base):
     status: Mapped[PaintingStatus] = mapped_column(
         SQLEnum(PaintingStatus, name="painting_status_enum"),
         default=PaintingStatus.AVAILABLE, 
-        nullable=False, 
         index=True
     )
 
@@ -232,9 +229,12 @@ class Cart(Base):
         unique=True
     )
 
+    created_at: Mapped[datetime] = mapped_column(
+        server_default=text("TIMEZONE('utc', NOW())")
+    )
     updated_at: Mapped[datetime] = mapped_column(
         server_default=text("TIMEZONE('utc', NOW())"),
-        onupdate=datetime.now
+        onupdate=datetime.now,
     )
 
     # --- Relationships ---

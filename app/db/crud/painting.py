@@ -47,7 +47,6 @@ class PaintingCRUD(BaseCRUD):
         await db.flush()
         await db.refresh(painting)
 
-        await db.commit()
         return painting
 
 
@@ -62,7 +61,7 @@ class PaintingCRUD(BaseCRUD):
             .where(Painting.id == painting_id)
             .values(**kwargs)
         )
-        await db.commit()
+
         return await self.get_by_id(db, Painting, painting_id)
 
 
@@ -95,7 +94,7 @@ class PaintingCRUD(BaseCRUD):
             .where(Painting.id == painting_id)
             .values(status=status)
         )
-        await db.commit()
+
         if result.rowcount == 0:
             return None  # объекта не было
 

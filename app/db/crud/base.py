@@ -28,7 +28,6 @@ class BaseCRUD:
         if obj is None:
             return False
         await db.delete(obj)
-        await db.commit()
         return True
 
 
@@ -40,6 +39,6 @@ class BaseCRUD:
         if obj is None:
             raise ValueError("update: obj is None")
         merged_obj = await db.merge(obj)
-        await db.commit()
+
         await db.refresh(merged_obj)
         return merged_obj

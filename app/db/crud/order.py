@@ -23,7 +23,6 @@ class OrderCRUD(BaseCRUD):
         await db.flush()
         await db.refresh(order)
 
-        await db.commit()
         return order
 
 
@@ -37,5 +36,4 @@ class OrderCRUD(BaseCRUD):
             .values(**kwargs)
         )
 
-        await db.commit()
         return await self.get_by_id(db, Order, order_id)
