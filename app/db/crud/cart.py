@@ -43,3 +43,41 @@ class CartCRUD(BaseCRUD):
         await db.flush()
         await db.refresh(cart)
         return cart
+
+    async def remove_item(
+            self,
+            db: AsyncSession,
+            cart: Cart,
+            painting_id: UUID,
+    ) -> bool:
+        """Удалить одну позицию из корзины. Возвращает True, если что-то удалено."""
+        stmt = (
+            delete(CartItem)
+            .where(CartItem.cart_id == cart.id,
+                   CartItem.painting_id == painting_id)
+        )
+        result = await db.execute(stmt)
+        await db.flush()
+        return result.rowcount > 0
+
+    async def get_items(
+            self,
+            db: AsyncSession,
+            cart: Cart,
+    ) -> list[CartItem]:
+        """Вернуть список позиций корзины."""
+        stmt = select(CartItem).where(CartItem.cart_id == cart.id)
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+
+    async def delete_cart(
+            self,
+            db: AsyncSession,
+            cart: Cart,
+    ) -> bool:
+        """Удалить корзину целиком (с позициями — каскадно)."""
+        if cart is None:
+            return False
+        await db.delete(cart)
+        await db.flush()
+        return True
