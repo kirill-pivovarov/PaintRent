@@ -67,7 +67,7 @@ class OrderItemCRUD(BaseCRUD):
 
         if updated_id is None:
             return None
-        return await self.get_by_id(db, OrderItem, updated_id)
+        return await self.get_by_id(db, updated_id)
 
 
     async def get_by_order(

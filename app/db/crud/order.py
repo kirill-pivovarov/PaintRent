@@ -36,4 +36,4 @@ class OrderCRUD(BaseCRUD):
             .values(**kwargs)
         )
 
-        return await self.get_by_id(db, Order, order_id)
+        return await self.get_by_id(db, order_id)

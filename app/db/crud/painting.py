@@ -1,3 +1,4 @@
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import select, update
@@ -19,6 +20,13 @@ async def painting_list_available(db: AsyncSession) -> list[Painting]:
 
 class PaintingCRUD(BaseCRUD):
     model = Painting
+    title: str | None = None
+    author: str | None = None
+    price: Decimal | None = None
+    rent_price: Decimal | None = None
+    creation_year: int | None = None
+    status: PaintingStatus | None = None
+
     def __init__(self):
         super().__init__(Painting)
 
@@ -49,20 +57,17 @@ class PaintingCRUD(BaseCRUD):
 
         return painting
 
+    async def update_paintings(self, db, painting_id, **kwargs):
+        painting = await self.get_by_id(db, painting_id)
 
-    async def update_paintings(
-        self,
-        db: AsyncSession,
-        painting_id: UUID,
-        **kwargs,
-    ) -> Painting | None:
-        await db.execute(
-            update(Painting)
-            .where(Painting.id == painting_id)
-            .values(**kwargs)
-        )
+        if painting is None:
+            return None
 
-        return await self.get_by_id(db, Painting, painting_id)
+        for k, v in kwargs.items():
+            setattr(painting, k, v)
+
+        await db.flush()
+        return painting
 
 
     async def get_by_partner(
@@ -77,25 +82,7 @@ class PaintingCRUD(BaseCRUD):
         )
         result = await db.execute(stmt)
 
-        # будет ли такой вариант лучше? он тяжелее, но понтовей
-        # partner = await db.get(PartnerProfile, partner_id)
-        # paintings = partner.paintings
-
         return list(result.scalars().all())
 
-    async def update_status(
-        self,
-        db: AsyncSession,
-        painting_id: UUID,
-        status: PaintingStatus,
-    ) -> Painting | None:
-        result = await db.execute(
-            update(Painting)
-            .where(Painting.id == painting_id)
-            .values(status=status)
-        )
-
-        if result.rowcount == 0:
-            return None  # объекта не было
-
-        return await self.get_by_id(db, Painting, painting_id)
+    async def update_status(self, db, painting_id, status):
+        return await self.update_paintings(db, painting_id, status=status)

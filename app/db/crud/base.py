@@ -14,10 +14,13 @@ class BaseCRUD:
     async def get_by_id(
         self,
         db: AsyncSession,
-        entity: Type[ModelType],
-        id: UUID
-    ) -> Optional[ModelType]:
-        return await db.get(entity, id)
+        id: UUID) -> Optional[ModelType]:  # *, entity: Type[ModelType] = None
+        return await db.get(self.model, id)
+        # if entity is not None:
+        #     return await db.get(self.model, id)
+        # else:
+        #     return await db.get(entity, id)
+
     
     async def delete(
         self,
@@ -27,6 +30,7 @@ class BaseCRUD:
         if obj is None:
             return False
         await db.delete(obj)
+        await db.flush()
         return True
 
 

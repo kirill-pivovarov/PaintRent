@@ -132,7 +132,7 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID):
     order_id = order.id
 
 
-    found = await crud.get_by_id(db, Order, order_id)
+    found = await crud.get_by_id(db, order_id)
     if found is None:
         print("  Заказ не найден")
         return
@@ -165,7 +165,7 @@ async def check_order_crud(db: AsyncSession, customer_id: UUID):
 
 # PAINTING
 async def check_painting_crud(db: AsyncSession, partner_id: UUID) -> UUID:
-    # Создать, отредактировать, удалить, список всех картин партнера, список доступных картин
+
     print("\n3. PaintingCRUD — работа с картинами\n")
     crud = PaintingCRUD()
 
@@ -184,7 +184,7 @@ async def check_painting_crud(db: AsyncSession, partner_id: UUID) -> UUID:
     painting_id = painting.id
 
     # READ
-    found = await crud.get_by_id(db, Painting, painting_id)
+    found = await crud.get_by_id(db, painting_id)
     if found is None:
         print("  Картина не найдена")
         return painting_id
@@ -234,7 +234,7 @@ async def check_order_item_crud(
     item_id = item.id
 
     # READ
-    found = await crud.get_by_id(db, OrderItem, item_id)
+    found = await crud.get_by_id(db, item_id)
     if found is None:
         print("     Позиция не найдена")
         return
@@ -260,7 +260,7 @@ async def check_order_item_crud(
     ok = await crud.delete(db, found)
     print(f"    Удаление: {'успешно' if ok else 'не удалось'}")
 
-    after = await crud.get_by_id(db, OrderItem, item_id)
+    after = await crud.get_by_id(db, item_id)
     print(f"    После удаления: {after} (ожидаем None)")
 
 
@@ -292,7 +292,7 @@ async def main():
 
 async def init_models():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)  # ← раскомментировать
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
 
