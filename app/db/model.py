@@ -86,7 +86,7 @@ class ClientProfile(Base):
         ForeignKey("users.id", ondelete="CASCADE"), 
         primary_key=True
     )
-    phone_number: Mapped[Optional[str]] = mapped_column(String(20))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
 
     # --- Relationships ---
     user: Mapped["User"] = relationship(back_populates="client_profile")
@@ -108,7 +108,7 @@ class PartnerProfile(Base):
     )
 
     company_name: Mapped[Optional[str]] = mapped_column(String(255))
-    phone_number: Mapped[Optional[str]] = mapped_column(String(20))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
     address: Mapped[Optional[str]] = mapped_column(String(255))
 
     # --- Relationships ---

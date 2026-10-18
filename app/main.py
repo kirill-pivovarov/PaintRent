@@ -3,6 +3,7 @@ from app.core.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.api.deps import get_db
+from app.api.v1.auth import router as auth_router
 
 # Создаем приложение FastAPI
 app = FastAPI(
@@ -41,3 +42,5 @@ async def db_check(db: AsyncSession = Depends(get_db)):
         "db_status": "connected" if value == 1 else "error",
         "result": value
     }
+
+app.include_router(auth_router, prefix="/api/v1")

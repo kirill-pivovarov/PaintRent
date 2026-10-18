@@ -17,23 +17,23 @@ class UserCRUD(BaseCRUD):
         name: str,
         surname: str,
         role: UserRole,
-        phone_number: str | None=None,
+        phone: str | None=None,
         address: str | None=None,
         company_name: str | None=None
     ) -> User:
         user = User(
             email=email,
-            password_hash=hash_password(password),
+            password_hash=password,
             name=name,
             surname=surname,
             role=role
         )
 
         if role == UserRole.CLIENT:
-            user.client_profile = ClientProfile(phone_number=phone_number)
+            user.client_profile = ClientProfile(phone=phone)
         elif role == UserRole.PARTNER:
             user.partner_profile = PartnerProfile(
-                phone_number=phone_number,
+                phone=phone,
                 company_name=company_name,
                 address=address
             )
