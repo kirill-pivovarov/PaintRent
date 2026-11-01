@@ -28,30 +28,7 @@ async def painting_list(
     return list(result.scalars().all())
 
 
-async def painting_list_available(db: AsyncSession) -> list[Painting]:
-    stmt = (
-        select(Painting)
-        .where(Painting.status == PaintingStatus.AVAILABLE)
-        .order_by(Painting.title)
-    )
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
-
-
-async def painting_list1(db: AsyncSession) -> list[Painting]:
-    stmt = select(Painting).order_by(Painting.created_at.desc())
-    result = await db.execute(stmt)
-    return list(result.scalars().all())
-
-
 class PaintingCRUD(BaseCRUD[Painting]):
-    # title: str | None = None
-    # author: str | None = None
-    # price: Decimal | None = None
-    # rent_price: Decimal | None = None
-    # creation_year: int | None = None
-    # status: PaintingStatus | None = None
-
     def __init__(self):
         super().__init__(Painting)
 
