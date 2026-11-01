@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import TypeVar, Type, Optional
+from typing import TypeVar, Type, Optional, Generic
 from uuid import UUID
 
 from app.db.model import Base
@@ -7,7 +7,7 @@ from app.db.model import Base
 
 ModelType = TypeVar("ModelType", bound=Base)
 
-class BaseCRUD:
+class BaseCRUD(Generic[ModelType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
@@ -21,7 +21,7 @@ class BaseCRUD:
     async def delete(
         self,
         db: AsyncSession,
-        obj: Base
+        obj: ModelType | None
     ) -> bool:
         if obj is None:
             return False
@@ -34,10 +34,10 @@ class BaseCRUD:
         self,
         db: AsyncSession,
         obj: ModelType
-    ) -> ModelType | None:
+    ) -> ModelType:
         if obj is None:
             raise ValueError("update: obj is None")
-        merged_obj = await db.merge(obj)
+        merged = await db.merge(obj)
 
         await db.flush()
-        return merged_obj
+        return merged

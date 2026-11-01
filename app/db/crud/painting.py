@@ -8,7 +8,7 @@ from app.db.model import Painting, PaintingStatus
 from app.db.crud.base import BaseCRUD
 
 
-async def painting_list_(
+async def painting_list(
     db: AsyncSession,
     *,
     only_available: bool = False,
@@ -38,7 +38,7 @@ async def painting_list_available(db: AsyncSession) -> list[Painting]:
     return list(result.scalars().all())
 
 
-async def painting_list(db: AsyncSession) -> list[Painting]:
+async def painting_list1(db: AsyncSession) -> list[Painting]:
     stmt = select(Painting).order_by(Painting.created_at.desc())
     result = await db.execute(stmt)
     return list(result.scalars().all())
