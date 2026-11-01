@@ -11,3 +11,10 @@
 - **`app/api/deps.py`**: Добавлены зависимости `get_current_user` (достает юзера из токена) и фабрика `require_role` (проверка прав).
 - **`app/api/v1/auth.py`** и **`app/main.py`**: Реализованы и подключены эндпоинты `POST /auth/register`, `POST /auth/login`, `GET /auth/me`.
 - **phone_number -> phone**: во всех конфигурациях _(DB, model, CRUD, app/ и т.д.)_ теперь используется обозначение _phone_ для удобства.
+
+### 3. Реализован CRUD для картин (Paintings)
+- **`app/schemas/painting.py`**: Созданы DTO `PaintingCreate` (без `partner_id`), `PaintingUpdate` (все поля `Optional` для `PATCH`) и `PaintingRead`.
+- **`app/api/routers_v1/paintings.py`**: 
+  - Реализован публичный каталог `GET /paintings` (с фильтром `only_available`).
+  - Реализовано создание `POST /paintings` (доступно только `PARTNER` и `ADMIN` через `require_role`).
+  - Реализовано обновление `PATCH /paintings/{id}` и удаление `DELETE /paintings/{id}` (с проверкой, что партнёр редактирует только свои картины).
