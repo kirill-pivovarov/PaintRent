@@ -1,14 +1,14 @@
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Callable, Awaitable
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.connection import AsyncSessionLocal
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import decode_token
 from app.db.crud.user import UserCRUD
-from app.db.model import User
+from app.db.model import User, UserRole
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -54,3 +54,15 @@ async def get_current_user(
 
     return user
 
+def require_role(*roles: UserRole):
+    """Фабрика зависимостей: пропускает только пользователей с одной из указанных ролей."""
+    async def role_checker(
+            current_user: User = Depends(get_current_user)
+    ) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to perform this action"
+            )
+        return current_user
+    return role_checker

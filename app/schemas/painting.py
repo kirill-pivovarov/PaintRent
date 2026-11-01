@@ -10,7 +10,7 @@ class PaintingBase(BaseModel):
     """Базовые поля картины."""
     title: str
     author: str
-    creation_year: int = Field(..., ge=1900)
+    creation_year: int = Field(..., ge=1800)
     # description
     price: Decimal = Field(..., gt=0)
     rent_price: Decimal = Field(..., gt=0)

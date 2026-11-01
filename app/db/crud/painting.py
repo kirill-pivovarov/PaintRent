@@ -8,6 +8,26 @@ from app.db.model import Painting, PaintingStatus
 from app.db.crud.base import BaseCRUD
 
 
+async def painting_list_(
+    db: AsyncSession,
+    *,
+    only_available: bool = False,
+    order_by: str = "created_at_desc",
+    ) -> list[Painting]:
+
+    stmt = select(Painting)
+
+    if only_available:
+        stmt = stmt.where(Painting.status == PaintingStatus.AVAILABLE)
+
+    stmt = stmt.order_by(
+        Painting.title if order_by == "title" else Painting.created_at.desc()
+    )
+
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
 async def painting_list_available(db: AsyncSession) -> list[Painting]:
     stmt = (
         select(Painting)
@@ -18,14 +38,19 @@ async def painting_list_available(db: AsyncSession) -> list[Painting]:
     return list(result.scalars().all())
 
 
-class PaintingCRUD(BaseCRUD):
-    model = Painting
-    title: str | None = None
-    author: str | None = None
-    price: Decimal | None = None
-    rent_price: Decimal | None = None
-    creation_year: int | None = None
-    status: PaintingStatus | None = None
+async def painting_list(db: AsyncSession) -> list[Painting]:
+    stmt = select(Painting).order_by(Painting.created_at.desc())
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
+class PaintingCRUD(BaseCRUD[Painting]):
+    # title: str | None = None
+    # author: str | None = None
+    # price: Decimal | None = None
+    # rent_price: Decimal | None = None
+    # creation_year: int | None = None
+    # status: PaintingStatus | None = None
 
     def __init__(self):
         super().__init__(Painting)
@@ -84,5 +109,5 @@ class PaintingCRUD(BaseCRUD):
 
         return list(result.scalars().all())
 
-    async def update_status(self, db, painting_id, status):
+    async def update_status(self, db, painting_id, status) -> Painting | None:
         return await self.update_paintings(db, painting_id, status=status)

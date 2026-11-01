@@ -3,7 +3,8 @@ from app.core.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.api.deps import get_db
-from app.api.v1.auth import router as auth_router
+from app.api.routers_v1.auth import router as auth_router
+from app.api.routers_v1.paintings import router as paintings_router
 
 # Создаем приложение FastAPI
 app = FastAPI(
@@ -12,22 +13,6 @@ app = FastAPI(
     docs_url="/api/v1/docs",       # Где будет доступен Swagger UI
     openapi_url="/api/v1/openapi.json" # Где лежит JSON-схема API
 )
-
-# Простейший эндпоинт для проверки, что сервер жив
-@app.get("/health")
-async def health_check():
-    return {"status": "ok"}
-
-# Эндпоинт, который проверит, что настройки считались
-@app.get("/config-check")
-async def config_check():
-    # Внимание: НИКОГДА не отдавайте SECRET_KEY или DATABASE_URL в реальном API!
-    # Мы делаем это только для теста, чтобы убедиться, что .env прочитался.
-    return {
-        "db_url_starts_with": settings.DATABASE_URL[:10] + "...",
-        "has_secret": len(settings.SECRET_KEY) > 0
-    }
-
 
 @app.get("/db-check")
 async def db_check(db: AsyncSession = Depends(get_db)):
@@ -44,3 +29,4 @@ async def db_check(db: AsyncSession = Depends(get_db)):
     }
 
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(paintings_router, prefix="/api/v1")
