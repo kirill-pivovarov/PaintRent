@@ -6,14 +6,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_db, require_role
 from app.db.crud import PaintingCRUD
-from app.db.crud.painting import painting_list_available, painting_list, painting_list
+from app.db.crud.painting import painting_list
 from app.db.model import Painting, UserRole, User
 from app.schemas.painting import PaintingRead, PaintingCreate, PaintingUpdate
 
 router = APIRouter(prefix="/paintings", tags=["Paintings"])
 
 painting_crud = PaintingCRUD()
-
 
 # ---------- зависимости ----------
 async def get_painting_or_404(
@@ -22,6 +21,7 @@ async def get_painting_or_404(
 ) -> Painting:
     """Достает картину по id из path или бросает 404."""
     painting = await painting_crud.get_by_id(db, painting_id)
+
     if not painting:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Painting not found")
     return painting
