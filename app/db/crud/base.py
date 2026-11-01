@@ -14,12 +14,8 @@ class BaseCRUD:
     async def get_by_id(
         self,
         db: AsyncSession,
-        id: UUID) -> Optional[ModelType]:  # *, entity: Type[ModelType] = None
+        id: UUID) -> Optional[ModelType]:
         return await db.get(self.model, id)
-        # if entity is not None:
-        #     return await db.get(self.model, id)
-        # else:
-        #     return await db.get(entity, id)
 
     
     async def delete(
@@ -43,5 +39,5 @@ class BaseCRUD:
             raise ValueError("update: obj is None")
         merged_obj = await db.merge(obj)
 
-        await db.refresh(merged_obj)
+        await db.flush()
         return merged_obj
