@@ -1,8 +1,8 @@
 import asyncio
-from app.db.connection import AsyncSessionLocal
-from app.db.crud.user import UserCRUD
-from app.db.model import UserRole
-from app.core.security import hash_password
+from GatewayService.app.db.connection import AsyncSessionLocal
+from GatewayService.app.db.crud.user import UserCRUD
+from GatewayService.app.db.model import UserRole
+from GatewayService.app.core.security import hash_password
 
 async def main():
     async with AsyncSessionLocal() as db:

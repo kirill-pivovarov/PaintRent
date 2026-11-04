@@ -2,12 +2,12 @@ from typing import AsyncGenerator, Callable, Awaitable
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.connection import AsyncSessionLocal
+from GatewayService.app.db.connection import AsyncSessionLocal
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from app.core.security import decode_token
-from app.db.crud.user import UserCRUD
-from app.db.model import User, UserRole
+from GatewayService.app.core.security import decode_token
+from GatewayService.app.db.crud.user import UserCRUD
+from GatewayService.app.db.model import User, UserRole
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

@@ -4,8 +4,8 @@ from uuid import UUID
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.model import Painting, PaintingStatus
-from app.db.crud.base import BaseCRUD
+from GatewayService.app.db.model import Painting, PaintingStatus
+from GatewayService.app.db.crud.base import BaseCRUD
 
 
 async def painting_list(
