@@ -3,7 +3,7 @@ from uuid import UUID
 from datetime import datetime
 from decimal import Decimal
 from typing import List
-from .db.model import OrderStatus, OrderItemType
+from app.db.model import OrderStatus, OrderItemType
 
 class OrderItemRead(BaseModel):
     """Детали одной позиции в заказе."""

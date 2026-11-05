@@ -86,8 +86,10 @@ async def refresh(
     user = await crud.get_user_by_refresh_token_hash(db, hash_token(raw_refresh_token.refresh_token))
     if not token_db:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid refresh token.")
+
     if not user:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "The user is not signed up.")
+
     if token_db.is_revoked:
         session_tokens = await crud.get_tokens_by_session_id(db, token_db.session_id)
         if any((not token.is_revoked for token in session_tokens)):

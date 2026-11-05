@@ -5,7 +5,7 @@ from sqlalchemy import update,select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.model import Order, OrderStatus, OrderItem, OrderItemStatus, PaintingStatus, OrderItemType, Painting
+from app.db.model import Order, OrderStatus, OrderItem, OrderItemStatus, PaintingStatus, OrderItemType, Painting, Cart
 from app.db.crud.base import BaseCRUD
 
 
@@ -40,28 +40,41 @@ class OrderCRUD(BaseCRUD[Order]):
 
         return await self.get_by_id(db, order_id)
 
-    async def create_order_from_paintings(
+    async def get_with_items(self, db: AsyncSession, order_id: UUID) -> Order | None:
+        """Достает заказ вместе с позициями и картинами."""
+        stmt = (
+            select(Order)
+            .where(Order.id == order_id)
+            .options(selectinload(Order.items).selectinload(OrderItem.painting))
+        )
+        result = await db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def create_order_from_cart(
             self,
             db: AsyncSession,
             customer_id: UUID,
-            paintings: list[Painting],
+            cart: Cart,
             order_type: OrderItemType = OrderItemType.RENT
     ) -> Order:
-        """
-        Создает заказ из списка картин.
-        Проверяет статус, создает Order и OrderItem, меняет статус картин на RENTED.
-        """
+        """Создает заказ из корзины."""
+        if not cart.items:
+            raise ValueError("Cart is empty")
+
         order = Order(
             customer_id=customer_id,
             status=OrderStatus.CREATED,
             total_price=Decimal("0.00")
         )
         db.add(order)
-        await db.flush()
+        await db.flush()  # Получаем order.id
 
         total_price = Decimal("0.00")
 
-        for painting in paintings:
+        # Проходимся по позициям корзины
+        for cart_item in cart.items:
+            painting = cart_item.painting
+
             if painting.status != PaintingStatus.AVAILABLE:
                 raise ValueError(f"Painting '{painting.title}' is not available")
 
@@ -77,15 +90,16 @@ class OrderCRUD(BaseCRUD[Order]):
             db.add(order_item)
             total_price += price
 
+            # Бронируем картину
             painting.status = PaintingStatus.RENTED
+
+            # Удаляем позицию из корзины (она переехала в заказ)
+            await db.delete(cart_item)
 
         order.total_price = total_price
         await db.flush()
 
-        stmt = select(Order).where(Order.id == order.id).options(selectinload(Order.items))
-        result = await db.execute(stmt)
-        return result.scalar_one()
-
+        return await self.get_with_items(db, order.id)
 
     async def confirm_order_item(
             self,

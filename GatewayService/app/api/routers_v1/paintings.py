@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, require_role
+from app.api.deps import get_db, require_role, CurrentUser
 from app.db.crud import PaintingCRUD
 from app.db.crud.painting import painting_list
 from app.db.model import Painting, UserRole, User
@@ -29,7 +29,7 @@ async def get_painting_or_404(
 
 def require_owner_or_admin(
     painting: Painting = Depends(get_painting_or_404),
-    current_user: User = Depends(require_role(UserRole.PARTNER, UserRole.ADMIN)),
+    current_user: CurrentUser = Depends(require_role(UserRole.PARTNER, UserRole.ADMIN)),
 ) -> Painting:
     """Проверяет, что текущий пользователь — владелец картины или ADMIN.
     Возвращает уже загруженную картину."""
@@ -51,7 +51,7 @@ async def get_all_paintings(db: AsyncSession = Depends(get_db)):
 @router.get("/my", response_model=list[PaintingRead])
 async def get_my_paintings(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.PARTNER, UserRole.ADMIN)),
+    current_user: CurrentUser = Depends(require_role(UserRole.PARTNER, UserRole.ADMIN)),
 ):
     return await painting_crud.get_by_partner(db, current_user.id)
 
@@ -68,7 +68,7 @@ async def get_painting(painting: Painting = Depends(get_painting_or_404)):
 @router.post("/", response_model=PaintingRead, status_code=status.HTTP_201_CREATED)
 async def create_painting(data: PaintingCreate,
                           db: AsyncSession = Depends(get_db),
-                          current_user: User = Depends(require_role(UserRole.PARTNER, UserRole.ADMIN))
+                          current_user: CurrentUser = Depends(require_role(UserRole.PARTNER, UserRole.ADMIN))
                           ):
     """Создать картину (только PARTNER или ADMIN)."""
 
