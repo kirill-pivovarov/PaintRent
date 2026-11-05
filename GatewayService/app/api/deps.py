@@ -2,12 +2,13 @@ from typing import AsyncGenerator, Callable, Awaitable
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.db.connection import AsyncSessionLocal
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from app.core.security import decode_token
-from app.db.crud.user import UserCRUD
-from app.db.model import User, UserRole
+
+from GatewayService.app.db.connection import AsyncSessionLocal
+from GatewayService.app.core.security import decode_token
+from GatewayService.app.db.crud.user import UserCRUD
+from GatewayService.app.db.model import User, UserRole
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -25,7 +26,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.rollback()
             raise
 
-# Эта строчка нужна для кнопки Authorize в Swagger
+#  OAuth2PasswordBearer is used to extract the token from the request header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 async def get_current_user(

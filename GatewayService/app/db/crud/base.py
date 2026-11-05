@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import TypeVar, Type, Optional, Generic
 from uuid import UUID
 
-from app.db.model import Base
+from GatewayService.app.db.model import Base
 
 
 ModelType = TypeVar("ModelType", bound=Base)

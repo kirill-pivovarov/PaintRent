@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_db, require_role
-from app.db.crud.painting import PaintingCRUD, painting_list
-from app.db.model import User, UserRole
-from app.schemas.painting import PaintingRead
+from GatewayService.app.api.deps import get_db, require_role
+from GatewayService.app.db.crud.painting import PaintingCRUD, painting_list
+from GatewayService.app.db.model import User, UserRole
+from GatewayService.app.schemas.painting import PaintingRead
 
 router = APIRouter(prefix="/admin/paintings", tags=["Admin: Paintings"])
 

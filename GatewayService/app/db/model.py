@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import (String, Enum as SQLEnum, text, ForeignKey, Numeric, UniqueConstraint,
                         DateTime, Integer, Boolean)
 
-from app.db.mixins import UUIDMixin, TimestampMixin
+from GatewayService.app.db.mixins import UUIDMixin, TimestampMixin
 
 class Base(DeclarativeBase):
     pass
@@ -39,6 +39,12 @@ class OrderStatus(str, Enum):
     PAID = "PAID"
     CANCELED = "CANCELED"
 
+
+class OrderItemStatus(str, Enum):
+    CREATED = "CREATED"
+    CONFIRMED = "CONFIRMED"
+    PAID = "PAID"
+    CANCELED = "CANCELED"
 
 class OrderItemType(str, Enum):
     RENT = "RENT"
@@ -194,9 +200,9 @@ class OrderItem(UUIDMixin, Base):
         nullable=False
     )
 
-    status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus, name="order_item_status_enum"), 
-        default=OrderStatus.CREATED
+    status: Mapped[OrderItemStatus] = mapped_column(
+        SQLEnum(OrderItemStatus, name="order_item_status_enum"),
+        default=OrderItemStatus.CREATED
     )
 
     type: Mapped[OrderItemType] = mapped_column(

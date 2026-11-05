@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field  # @validator
 from uuid import UUID
-from app.db.model import UserRole
+from GatewayService.app.db.model import UserRole
 
 class UserCreate(BaseModel):
     """Что клиент присылает при регистрации."""
