@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from jose import jwt
 from pwdlib import PasswordHash
-from GatewayService.app.settings import settings
+from app.settings import settings
 
 # Инициализируем хэшер с помощью Argon2 или Bcrypt
 password_hash = PasswordHash.recommended()

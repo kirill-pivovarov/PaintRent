@@ -4,8 +4,8 @@ from decimal import Decimal
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from GatewayService.app.db.model import OrderItem, OrderItemType, OrderStatus
-from GatewayService.app.db.crud.base import BaseCRUD
+from app.db.model import OrderItem, OrderItemType, OrderStatus
+from app.db.crud.base import BaseCRUD
 
 
 class OrderItemCRUD(BaseCRUD):

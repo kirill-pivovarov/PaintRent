@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import (String, Enum as SQLEnum, text, ForeignKey, Numeric, UniqueConstraint,
                         DateTime, Integer, Boolean)
 
-from GatewayService.app.db.mixins import UUIDMixin, TimestampMixin
+from app.db.mixins import UUIDMixin, TimestampMixin
 
 class Base(DeclarativeBase):
     pass

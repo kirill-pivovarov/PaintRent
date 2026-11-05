@@ -5,8 +5,8 @@ from sqlalchemy import update,select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from GatewayService.app.db.model import Order, OrderStatus, OrderItem, OrderItemStatus, PaintingStatus, OrderItemType, Painting
-from GatewayService.app.db.crud.base import BaseCRUD
+from app.db.model import Order, OrderStatus, OrderItem, OrderItemStatus, PaintingStatus, OrderItemType, Painting
+from app.db.crud.base import BaseCRUD
 
 
 class OrderCRUD(BaseCRUD[Order]):
