@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from uuid import UUID, uuid4
 
-from app.db.model import Cart, CartItem, Painting
-from app.db.crud import BaseCRUD
+from GatewayService.app.db.model import Cart, CartItem, Painting
+from GatewayService.app.db.crud import BaseCRUD
 
 class CartCRUD(BaseCRUD):
     def __init__(self):
