@@ -19,15 +19,15 @@ from decimal import Decimal
 
 from sqlalchemy import select, delete, func
 
-from GatewayService.app.db.connection import AsyncSessionLocal, engine
-from GatewayService.app.db.crud import (
+from app.db.connection import AsyncSessionLocal, engine
+from app.db.crud import (
     UserCRUD,
     PaintingCRUD,
     OrderCRUD,
     OrderItemCRUD,
     UserRole
 )
-from GatewayService.app.db.model import (
+from app.db.model import (
     Base,
     User,
     Painting,

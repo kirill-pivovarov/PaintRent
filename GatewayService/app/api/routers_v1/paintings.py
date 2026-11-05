@@ -4,11 +4,11 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from GatewayService.app.api.deps import get_db, require_role
-from GatewayService.app.db.crud import PaintingCRUD
-from GatewayService.app.db.crud.painting import painting_list
-from GatewayService.app.db.model import Painting, UserRole, User
-from GatewayService.app.schemas.painting import PaintingRead, PaintingCreate, PaintingUpdate
+from app.api.deps import get_db, require_role
+from app.db.crud import PaintingCRUD
+from app.db.crud.painting import painting_list
+from app.db.model import Painting, UserRole, User
+from app.schemas.painting import PaintingRead, PaintingCreate, PaintingUpdate
 
 router = APIRouter(prefix="/paintings", tags=["Paintings"])
 
