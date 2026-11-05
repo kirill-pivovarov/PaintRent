@@ -18,11 +18,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-def create_access_token(subject: str) -> str:
+def create_access_token(subject: str, role: str) -> str:
     """Создает JWT токен. subject — это обычно ID пользователя."""
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     # В токен кладем время жизни (exp) и ID (sub)
-    to_encode = {"exp": expire, "sub": str(subject)}
+    to_encode = {"exp": expire, "sub": str(subject), "role": role}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

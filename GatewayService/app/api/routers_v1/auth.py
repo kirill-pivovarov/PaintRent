@@ -46,7 +46,10 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
     if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
 
-    token = create_access_token(subject=str(user.id))
+    token = create_access_token(
+        subject=str(user.id),
+        role=user.role.value  # <--- ВОТ ЭТО ГЛАВНОЕ
+    )
     return {"access_token": token, "token_type": "bearer"}
 
 

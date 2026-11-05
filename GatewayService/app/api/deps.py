@@ -3,7 +3,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, HTTPBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
 from app.db.connection import AsyncSessionLocal
@@ -35,9 +35,10 @@ class CurrentUser(BaseModel):
 
 
 async def get_current_user(
-        token: str = Depends(security),
+        credentials: HTTPAuthorizationCredentials  = Depends(security),
 ) -> CurrentUser:
     """Достает ID и роль пользователя прямо из токена."""
+    token = credentials.credentials
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -49,13 +50,15 @@ async def get_current_user(
         role_str: str = payload.get("role")  # Достаем роль из токена!
 
         if user_id_str is None or role_str is None:
+            print(f"DEBUG: Missing fields in token. Payload: {payload}")
             raise credentials_exception
 
         return CurrentUser(
             id=UUID(user_id_str),
             role=UserRole(role_str)
         )
-    except Exception:
+    except Exception as e:
+        print(f"DEBUG AUTH ERROR: {type(e).__name__} - {e}")
         raise credentials_exception
 
 
