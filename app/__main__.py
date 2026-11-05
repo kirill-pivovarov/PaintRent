@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.crud.order import OrderCRUD
 from app.db.crud.orderItem import OrderItemCRUD
-from app.db.crud.painting import PaintingCRUD, painting_list_available
+from app.db.crud.painting import PaintingCRUD
 from .db.connection import AsyncSessionLocal
 from .db.crud import UserCRUD, UserRole, CartCRUD
 from .db.connection import engine

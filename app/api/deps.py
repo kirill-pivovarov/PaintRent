@@ -25,7 +25,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             await session.rollback()
             raise
 
-# Эта строчка нужна для кнопки Authorize в Swagger
+#  OAuth2PasswordBearer is used to extract the token from the request header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 async def get_current_user(

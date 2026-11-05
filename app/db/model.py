@@ -40,6 +40,12 @@ class OrderStatus(str, Enum):
     CANCELED = "CANCELED"
 
 
+class OrderItemStatus(str, Enum):
+    CREATED = "CREATED"
+    CONFIRMED = "CONFIRMED"
+    PAID = "PAID"
+    CANCELED = "CANCELED"
+
 class OrderItemType(str, Enum):
     RENT = "RENT"
     PURCHASE = "PURCHASE"
@@ -194,9 +200,9 @@ class OrderItem(UUIDMixin, Base):
         nullable=False
     )
 
-    status: Mapped[OrderStatus] = mapped_column(
-        SQLEnum(OrderStatus, name="order_item_status_enum"), 
-        default=OrderStatus.CREATED
+    status: Mapped[OrderItemStatus] = mapped_column(
+        SQLEnum(OrderItemStatus, name="order_item_status_enum"),
+        default=OrderItemStatus.CREATED
     )
 
     type: Mapped[OrderItemType] = mapped_column(

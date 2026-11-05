@@ -6,6 +6,7 @@ from app.api.deps import get_db
 from app.api.routers_v1.auth import router as auth_router
 from app.api.routers_v1.paintings import router as paintings_router
 from app.api.routers_v1.admin import router as admin_router
+from app.api.routers_v1.orders import router as orders_router
 
 # Создаем приложение FastAPI
 app = FastAPI(
@@ -32,3 +33,4 @@ async def db_check(db: AsyncSession = Depends(get_db)):
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(paintings_router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
+app.include_router(orders_router, prefix="/api/v1")
