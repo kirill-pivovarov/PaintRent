@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends
-from app.core.config import settings
+from app.settings import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.api.deps import get_db

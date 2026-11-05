@@ -5,8 +5,8 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.db.model import Base
-from app.db.connection import DATABASE_URL  
+from GatewayService.app.db.model import Base
+from GatewayService.app.db.connection import DATABASE_URL  
 
 from dotenv import load_dotenv
 from os import getenv
