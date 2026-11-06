@@ -29,7 +29,7 @@ def calculate_expire(delta: timedelta = get_settings().access_token_ttl_minutes)
 
 def create_access_token(jwt_payload: JWTPayload) -> str:
     """Создает JWT токен. subject — это обычно ID пользователя."""
-    to_encode = jwt_payload.model_dump()
+    to_encode = jwt_payload.model_dump(mode="json")
     encoded_jwt = jwt.encode(to_encode, get_settings().secret_key, algorithm=get_settings().access_token_algorithm)
     return encoded_jwt
 

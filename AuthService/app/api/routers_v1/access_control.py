@@ -55,7 +55,7 @@ async def signup(
 
         return TokensPair(
             access_token=create_access_token(JWTPayload(
-                sub=str(user.id),
+                sub=user.id,
                 role=user.role,
                 exp=calculate_expire()
             )), 
@@ -102,7 +102,7 @@ async def signup_admin(
 
     return TokensPair(
         access_token=create_access_token(JWTPayload(
-                sub=str(user.id),
+                sub=user.id,
                 role=user.role,
                 exp=calculate_expire()
         )), 
@@ -132,7 +132,7 @@ async def login(
 
     return TokensPair(
         access_token=create_access_token(JWTPayload(
-                sub=str(user.id),
+                sub=user.id,
                 role=user.role,
                 exp=calculate_expire()
         )),
@@ -177,7 +177,7 @@ async def refresh(
         await crud.delete_old_refresh_tokens(db, get_settings().refresh_token_ttl_days * 3)
         return TokensPair(
             access_token=create_access_token(JWTPayload(
-                sub=str(user.id),
+                sub=user.id,
                 role=user.role,
                 exp=calculate_expire()
             )),
