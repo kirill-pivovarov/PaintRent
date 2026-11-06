@@ -56,7 +56,7 @@ async def create_refresh_token(session: AsyncSession, refresh_token_create: Refr
     await session.refresh(new_refresh_token)
     return RefreshTokenRead.model_validate(new_refresh_token)
 
-async def delete_old_refresh_tokens(session: AsyncSession, period_days: int):
-    stmt = delete(RefreshToken).where(RefreshToken.expires_at + timedelta(days=period_days) < datetime.now(timezone.utc))
+async def delete_old_refresh_tokens(session: AsyncSession, delta: timedelta):
+    stmt = delete(RefreshToken).where(RefreshToken.expires_at + delta < datetime.now(timezone.utc))
     await session.execute(stmt)
     await session.flush()

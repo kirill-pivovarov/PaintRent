@@ -24,15 +24,15 @@ def verify_token(raw_token: str, token_hash: str) -> bool:
     current_hash = hash_token(raw_token)
     return hmac.compare_digest(current_hash, token_hash)
 
-def calculate_expire(delta: timedelta = get_settings().access_token_ttl_minutes) -> datetime:
-    return datetime.now(timezone.utc) + timedelta(minutes=delta)
+def calculate_expire(delta: timedelta = get_settings().access_token_ttl) -> datetime:
+    return datetime.now(timezone.utc) + delta
 
 def create_access_token(jwt_payload: JWTPayload) -> str:
     """Создает JWT токен. subject — это обычно ID пользователя."""
     to_encode = jwt_payload.model_dump(mode="json")
-    encoded_jwt = jwt.encode(to_encode, get_settings().secret_key, algorithm=get_settings().access_token_algorithm)
+    encoded_jwt = jwt.encode(to_encode, get_settings().secret_key.get_secret_value(), algorithm=get_settings().access_token_algorithm)
     return encoded_jwt
 
 def decode_token(token: str) -> JWTPayload:
     """Расшифровывает токен. Если подпись неверна или время вышло — выбросит ошибку."""
-    return JWTPayload(**jwt.decode(token, get_settings().secret_key, algorithms=[get_settings().access_token_algorithm]))
+    return JWTPayload(**jwt.decode(token, get_settings().secret_key.get_secret_value(), algorithms=[get_settings().access_token_algorithm]))

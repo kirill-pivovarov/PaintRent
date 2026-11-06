@@ -155,6 +155,13 @@ async def refresh(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid refresh token.")
     if not user:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "The user is not signed up.")
+
+    if token_db.expires_at < datetime.now(timezone.utc):
+        await crud.revoke_token(db, token_db.id)
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "The refresh token is expired.")
+
+
+    
     if token_db.is_revoked:
         session_tokens = await crud.get_tokens_by_session_id(db, token_db.session_id)
         if any((not token.is_revoked for token in session_tokens)):
@@ -170,11 +177,11 @@ async def refresh(
                 user_id=user.id,
                 token_hash=hash_token(new_raw_refresh_token),
                 session_id=token_db.session_id,
-                expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_ttl_days)
+                expires_at=datetime.now(timezone.utc) + get_settings().refresh_token_ttl
             )
         )
         await crud.revoke_token(db, token_db.id)
-        await crud.delete_old_refresh_tokens(db, get_settings().refresh_token_ttl_days * 3)
+        await crud.delete_old_refresh_tokens(db, get_settings().refresh_token_ttl * 3)
         return TokensPair(
             access_token=create_access_token(JWTPayload(
                 sub=user.id,

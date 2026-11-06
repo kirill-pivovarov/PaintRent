@@ -1,6 +1,9 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import computed_field
 from functools import lru_cache
+from datetime import timedelta
+
+from pydantic_settings import BaseSettings, SettingsConfigDict, SecretStr
+from pydantic import computed_field
+
 
 class Settings(BaseSettings):
     db_host: str
@@ -9,11 +12,11 @@ class Settings(BaseSettings):
     db_user: str
     db_password: str
 
-    secret_key: str
+    secret_key: SecretStr
 
-    refresh_token_ttl_days: int
-    access_token_ttl_minutes: int
-    access_token_algorithm: str = "HS256"
+    refresh_token_ttl = timedelta(days=30)
+    access_token_ttl = timedelta(minutes=15)
+    access_token_algorithm = "HS256"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     redis_url: str
