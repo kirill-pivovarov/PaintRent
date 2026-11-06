@@ -1,6 +1,7 @@
 from .user import UserCreate, UserRead, UserUpdate
 from .refresh_token import RefreshTokenCreate, RefreshTokenRead, RefreshTokenUpdate, RefreshTokenRequest
-from .login_response import TokensPair
+from .refresh_token import TokensPair
+from .access_control_forms import LogInForm, SignUpForm
 
 __all__ = [
     "UserCreate",
@@ -10,5 +11,7 @@ __all__ = [
     "RefreshTokenRead",
     "RefreshTokenUpdate",
     "RefreshTokenRequest",
-    "TokensPair"
+    "TokensPair",
+    "LogInForm",
+    "SignUpForm",
 ]

@@ -6,9 +6,10 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.schemas.refresh_token import TokensPair
 from app.api.deps import get_db
 from app.services.security import hash_token, create_access_token, verify_password
-from app.schemas import UserCreate, UserRead, RefreshTokenCreate, TokensPair, RefreshTokenRequest
+from app.schemas import UserRead, UserCreate, RefreshTokenCreate, RefreshTokenRequest, SignUpForm, LogInForm
 from app.db import crud
 from app.settings import get_settings
 
@@ -16,13 +17,18 @@ router = APIRouter(prefix="/api/v1/auth", tags=["v1", "auth"])
 
 @router.post("/signup", response_model=TokensPair, status_code=status.HTTP_201_CREATED)
 async def signup(
-    user_create: UserCreate,
+    signup_data: SignUpForm,
     db: AsyncSession = Depends(get_db),
 ) -> TokensPair:
     # Логика регистрации пользователя
-    user = await crud.get_user_by_email(db, user_create.email)
+    user = await crud.get_user_by_email(db, signup_data.email)
     if not user:
-        user = await crud.create_user(db, user_create)
+        if signup_data.role == "ADMIN":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Cannot create an ADMIN user through this endpoint."
+            )
+        user = await crud.create_user(db, UserCreate(**signup_data))
         session_id = uuid.uuid4()
         raw_refresh_token = secrets.token_urlsafe(64)
         await crud.create_refresh_token(
@@ -47,14 +53,12 @@ async def signup(
 
 @router.post("/login", response_model=TokensPair, status_code=status.HTTP_200_OK)
 async def login(
-    user_create: UserCreate,
+    login_data: LogInForm,
     db = Depends(get_db),
 ) -> TokensPair:
-    user = await crud.get_user_by_email(db, user_create.email)
-
-    if not user or not user_create.password or not verify_password(user_create.password.get_secret_value(), user.password_hash):
+    user = await crud.get_user_by_email(db, login_data.email)
+    if not user or not login_data.password or not verify_password(login_data.password.get_secret_value(), user.password_hash):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
-
 
     raw_refresh_token = secrets.token_urlsafe(64)
     await crud.create_refresh_token(
