@@ -1,7 +1,8 @@
 from .user import UserCreate, UserRead, UserUpdate
 from .refresh_token import RefreshTokenCreate, RefreshTokenRead, RefreshTokenUpdate, RefreshTokenRequest
 from .refresh_token import TokensPair
-from .access_control_forms import LogInForm, SignUpForm
+from .access_control_forms import LogInForm, SignUpForm, AdminSignUpForm
+from .jwt_payload import JWTPayload
 
 __all__ = [
     "UserCreate",
@@ -14,4 +15,6 @@ __all__ = [
     "TokensPair",
     "LogInForm",
     "SignUpForm",
+    "AdminSignUpForm",
+    "JWTPayload"
 ]

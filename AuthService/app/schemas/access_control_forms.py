@@ -17,3 +17,6 @@ class SignUpForm(BaseModel):
         if v.upper() in [item.value for item in UserRole]:
             return v
         raise ValueError("There is no such role.")
+
+
+AdminSignUpForm = LogInForm

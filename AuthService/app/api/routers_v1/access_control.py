@@ -7,9 +7,21 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.refresh_token import TokensPair
-from app.api.deps import get_db
-from app.services.security import hash_token, create_access_token, verify_password
-from app.schemas import UserRead, UserCreate, RefreshTokenCreate, RefreshTokenRequest, SignUpForm, LogInForm
+from app.db import UserRole
+from app.db.deps import get_db
+from app.redis.deps import get_redis, Redis
+from app.api.deps import require_role, parse_login_data
+from app.services.security import hash_token, create_access_token, verify_password, calculate_expire
+from app.schemas import (
+    UserRead,
+    UserCreate, 
+    RefreshTokenCreate, 
+    RefreshTokenRequest, 
+    SignUpForm, 
+    LogInForm,
+    AdminSignUpForm,
+    JWTPayload,
+)
 from app.db import crud
 from app.settings import get_settings
 
@@ -28,7 +40,7 @@ async def signup(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Cannot create an ADMIN user through this endpoint."
             )
-        user = await crud.create_user(db, UserCreate(**signup_data))
+        user = await crud.create_user(db, UserCreate(**signup_data.model_dump()))
         session_id = uuid.uuid4()
         raw_refresh_token = secrets.token_urlsafe(64)
         await crud.create_refresh_token(
@@ -42,7 +54,11 @@ async def signup(
         )
 
         return TokensPair(
-            access_token=create_access_token(str(user.id), user.role), 
+            access_token=create_access_token(JWTPayload(
+                sub=str(user.id),
+                role=user.role,
+                exp=calculate_expire()
+            )), 
             refresh_token=raw_refresh_token
         )
     else:
@@ -51,6 +67,49 @@ async def signup(
             detail="A user with such an email already exists."    
         )
 
+@router.post("/signup/{temp_link}", response_model=TokensPair, status_code=status.HTTP_201_CREATED)
+async def signup_admin(
+    temp_link: str,
+    signup_data: AdminSignUpForm,
+    db: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis)
+) -> TokensPair:
+    user = await crud.get_user_by_email(db, signup_data.email)
+    if user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A user with such an email already exists."
+        )    
+
+    invite_key = f"admin_invite:{temp_link}"
+    if not await redis.getdel(invite_key):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The link is invalid or expired.",
+        )
+    user = await crud.create_user(db, UserCreate(role="ADMIN", **signup_data.model_dump()))
+    session_id = uuid.uuid4()
+    raw_refresh_token = secrets.token_urlsafe(64)
+    await crud.create_refresh_token(
+        db,
+        RefreshTokenCreate(
+            user_id=user.id,
+            session_id=session_id,
+            token_hash=hash_token(raw_refresh_token),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_ttl_days)
+        )
+    )
+
+    return TokensPair(
+        access_token=create_access_token(JWTPayload(
+                sub=str(user.id),
+                role=user.role,
+                exp=calculate_expire()
+        )), 
+        refresh_token=raw_refresh_token
+    )
+
+    
 @router.post("/login", response_model=TokensPair, status_code=status.HTTP_200_OK)
 async def login(
     login_data: LogInForm,
@@ -72,7 +131,11 @@ async def login(
     )
 
     return TokensPair(
-        access_token=create_access_token(user.id, user.role),
+        access_token=create_access_token(JWTPayload(
+                sub=str(user.id),
+                role=user.role,
+                exp=calculate_expire()
+        )),
         refresh_token=raw_refresh_token
     )
 
@@ -113,7 +176,32 @@ async def refresh(
         await crud.revoke_token(db, token_db.id)
         await crud.delete_old_refresh_tokens(db, get_settings().refresh_token_ttl_days * 3)
         return TokensPair(
-            access_token=create_access_token(str(user.id), user.role),
+            access_token=create_access_token(JWTPayload(
+                sub=str(user.id),
+                role=user.role,
+                exp=calculate_expire()
+            )),
             refresh_token=new_raw_refresh_token
         )    
+
+
+@router.post("/invites/admin", summary="Сгенерировать ссылку для нового админа")
+async def create_admin_invite(
+
+    redis: Redis = Depends(get_redis),
+    jwt_payload: JWTPayload = Depends(require_role(UserRole.ADMIN))
+):
+    # 1. Генерируем случайный одноразовый токен
+    invite_token = secrets.token_urlsafe(32)
     
+    # 2. Кладём в Redis с временем жизни 24 часа (86400 секунд)
+    # Ключ: admin_invite:<token>, Значение: роль, которую мы дадим
+    await redis.set(
+        name=f"admin_invite:{invite_token}", 
+        value="ADMIN", 
+        ex=86400  # Сгорит через 24 часа
+    )
+    
+    # 3. Отдаем ссылку главному админу, чтобы он отправил её коллеге
+    invite_url = f"/api/v1/auth/signup/{invite_token}"
+    return {"invite_url": invite_url, "expires_in_hours": 24}
