@@ -10,7 +10,7 @@ from app.schemas.refresh_token import TokensPair
 from app.db import UserRole
 from app.db.deps import get_db
 from app.redis.deps import get_redis, Redis
-from app.api.deps import require_role, parse_login_data
+from app.api.deps import require_role
 from app.services.security import hash_token, create_access_token, verify_password, calculate_expire
 from app.schemas import (
     UserRead,
@@ -49,7 +49,7 @@ async def signup(
                 user_id=user.id,
                 session_id=session_id,
                 token_hash=hash_token(raw_refresh_token),
-                expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_ttl_days)
+                expires_at=datetime.now(timezone.utc) + get_settings().refresh_token_ttl
             )
         )
 
@@ -96,7 +96,7 @@ async def signup_admin(
             user_id=user.id,
             session_id=session_id,
             token_hash=hash_token(raw_refresh_token),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_ttl_days)
+            expires_at=datetime.now(timezone.utc) + get_settings().refresh_token_ttl
         )
     )
 
@@ -126,7 +126,7 @@ async def login(
             user_id=user.id,
             session_id=uuid.uuid4(),
             token_hash=hash_token(raw_refresh_token),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=get_settings().refresh_token_ttl_days)
+            expires_at=datetime.now(timezone.utc) + get_settings().refresh_token_ttl
         )
     )
 

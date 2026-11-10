@@ -13,3 +13,7 @@ class JWTPayload(BaseModel):
     @field_serializer('sub')
     def serialize_sub(self, v: UUID, _info):
         return str(v)  
+
+    @field_serializer("exp")
+    def serialiize_exp(self, v: datetime, _info):
+        return int(v.timestamp())

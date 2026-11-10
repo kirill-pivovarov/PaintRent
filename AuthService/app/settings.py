@@ -1,8 +1,8 @@
 from functools import lru_cache
 from datetime import timedelta
 
-from pydantic_settings import BaseSettings, SettingsConfigDict, SecretStr
-from pydantic import computed_field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import computed_field, SecretStr
 
 
 class Settings(BaseSettings):
@@ -14,9 +14,9 @@ class Settings(BaseSettings):
 
     secret_key: SecretStr
 
-    refresh_token_ttl = timedelta(days=30)
-    access_token_ttl = timedelta(minutes=15)
-    access_token_algorithm = "HS256"
+    refresh_token_ttl: timedelta = timedelta(days=30)
+    access_token_ttl: timedelta = timedelta(minutes=15)
+    access_token_algorithm: str = "HS256"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     redis_url: str
