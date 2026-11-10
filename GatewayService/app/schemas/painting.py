@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field  # @validator
 from uuid import UUID
-from GatewayService.app.db.model import PaintingStatus
+from app.db.model import PaintingStatus
 
 
 class PaintingBase(BaseModel):

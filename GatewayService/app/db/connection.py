@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from GatewayService.app.settings import settings
+from app.settings import get_settings
 
 # Движок берет строку из нашего Settings
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    get_settings().db_url,
     echo=False,
     pool_pre_ping=True,
 )

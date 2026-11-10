@@ -1,12 +1,9 @@
 from fastapi import FastAPI, Depends
-from GatewayService.app.settings import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from GatewayService.app.api.deps import get_db
-from GatewayService.app.api.routers_v1.auth import router as auth_router
-from GatewayService.app.api.routers_v1.paintings import router as paintings_router
-from GatewayService.app.api.routers_v1.admin import router as admin_router
-from GatewayService.app.api.routers_v1.orders import router as orders_router
+from app.db.deps import get_db
+
+from app.api.routers_v1.user import clients_router
 
 # Создаем приложение FastAPI
 app = FastAPI(
@@ -30,7 +27,4 @@ async def db_check(db: AsyncSession = Depends(get_db)):
         "result": value
     }
 
-app.include_router(auth_router, prefix="/api/v1")
-app.include_router(paintings_router, prefix="/api/v1")
-app.include_router(admin_router, prefix="/api/v1")
-app.include_router(orders_router, prefix="/api/v1")
+app.include_router(clients_router, prefix="/api/v1")

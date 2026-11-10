@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import (String, Enum as SQLEnum, text, ForeignKey, Numeric, UniqueConstraint,
                         DateTime, Integer, Boolean)
 
-from GatewayService.app.db.mixins import UUIDMixin, TimestampMixin
+from app.db.mixins import UUIDMixin, TimestampMixin
 
 class Base(DeclarativeBase):
     pass
@@ -54,38 +54,21 @@ class OrderItemType(str, Enum):
 # MODELS
 class User(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "users"
-
-    #id, created_at, updated_at из миксинов
-
-    email: Mapped[str] = mapped_column(String(150), unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(255))
     
     name: Mapped[str] = mapped_column(String(100))
     surname: Mapped[str] = mapped_column(String(100))
     
-    role: Mapped[UserRole] = mapped_column(SQLEnum(UserRole, name="user_st"))
-
-    # is_active: Mapped[bool] = mapped_column(
-    #     Boolean, default=True, nullable=False, server_default="true"
-    # )
-    # deleted_at: Mapped[datetime | None] = mapped_column(
-    #     DateTime(timezone=True), nullable=True
-    # )
-    # is_anonymized: Mapped[bool] = mapped_column(
-    #     Boolean, default=False, nullable=False, server_default="false"
-    # )
-
     # --- Relationships ---
-    client_profile: Mapped[Optional["ClientProfile"]] = relationship(
+    client_profile: Mapped[Optional["Client"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
-    partner_profile: Mapped[Optional["PartnerProfile"]] = relationship(
+    partner_profile: Mapped[Optional["Partner"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )
     
 
 
-class ClientProfile(Base):
+class Client(Base):
     __tablename__ = "client_profiles"
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -105,7 +88,7 @@ class ClientProfile(Base):
     )
 
 
-class PartnerProfile(Base):
+class Partner(Base):
     __tablename__ = "partner_profiles"
 
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -155,7 +138,7 @@ class Painting(UUIDMixin, TimestampMixin, Base):
     )
 
     # --- Relationships ---
-    owner: Mapped["PartnerProfile"] = relationship(back_populates="paintings")
+    owner: Mapped["Partner"] = relationship(back_populates="paintings")
     order_items: Mapped[List["OrderItem"]] = relationship(back_populates="painting")
     cart_items: Mapped[List["CartItem"]] = relationship(back_populates="painting")
 
@@ -179,7 +162,7 @@ class Order(UUIDMixin, TimestampMixin, Base):
     total_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0.0)
 
     # --- Relationships ---
-    client: Mapped["ClientProfile"] = relationship(back_populates="orders")
+    client: Mapped["Client"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(
         back_populates="order", 
         cascade="all, delete-orphan"
@@ -227,7 +210,7 @@ class Cart(UUIDMixin, TimestampMixin, Base):
     )
 
     # --- Relationships ---
-    user: Mapped["ClientProfile"] = relationship(back_populates="cart")
+    user: Mapped["Client"] = relationship(back_populates="cart")
     items: Mapped[List["CartItem"]] = relationship(
         back_populates="cart",
         cascade="all, delete-orphan",

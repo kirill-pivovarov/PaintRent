@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import TypeVar, Type, Optional, Generic
 from uuid import UUID
 
-from GatewayService.app.db.model import Base
+from app.db.model import Base
 
 
 ModelType = TypeVar("ModelType", bound=Base)
@@ -14,9 +14,9 @@ class BaseCRUD(Generic[ModelType]):
     async def get_by_id(
         self,
         db: AsyncSession,
-        id: UUID) -> Optional[ModelType]:
+        id: UUID
+    ) -> Optional[ModelType]:
         return await db.get(self.model, id)
-
     
     async def delete(
         self,

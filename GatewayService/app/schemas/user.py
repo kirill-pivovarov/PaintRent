@@ -1,30 +1,30 @@
 from pydantic import BaseModel, EmailStr, ConfigDict, Field  # @validator
+from pydantic_extra_types.phone_numbers import PhoneNumber
+
 from uuid import UUID
-from GatewayService.app.db.model import UserRole
+from app.db.model import UserRole
 
-class UserCreate(BaseModel):
-    """Что клиент присылает при регистрации."""
-    email: EmailStr
-    password: str
-    name: str = Field(..., min_length=3, max_length=50)
-    surname: str
-    role: UserRole = UserRole.CLIENT
-
-    # Дополнительные поля для профилей (опционально)
-    phone: str | None = None  # Только для Client
-    company_name: str | None = None  # Только для PARTNER
-    address: str | None = None  # Только для PARTNER
-
-class UserRead(BaseModel):
-    """Что мы отдаем клиенту."""
-    id: UUID
-    email: EmailStr
+class UserBase(BaseModel):
     name: str
     surname: str
-    role: UserRole
 
-    # Говорим Pydantic, что можно читать данные из ORM-объекта
-    model_config = ConfigDict(from_attributes=True,
-                              # Эта строчка говорит: "если поля нет в ORM-объекте, не падай, а ставь None"
-                              populate_by_name=True
-                              )
+class ClientProfile(UserBase):
+    phone: PhoneNumber | None = None
+
+class PartnerProfile(UserBase):
+    phone: PhoneNumber | None = None
+    company_name: str | None = None
+    address: str | None = None
+
+
+class ClientCreate(ClientProfile):
+    id: UUID
+
+class PartnerCreate(PartnerProfile):
+    id: UUID
+
+
+ClientOnboardingForm = ClientProfile
+PartnerOnboardingForm = PartnerProfile
+
+

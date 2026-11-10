@@ -1,56 +1,53 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from GatewayService.app.db.model import User, ClientProfile, PartnerProfile, UserRole, Cart
-from GatewayService.app.db.crud.base import BaseCRUD
-from GatewayService.app.core import hash_password
+from app.db.model import User, Client, Partner, UserRole, Cart
+from app.schemas import ClientCreate, PartnerCreate
+from app.db.crud.base import BaseCRUD
+from app.services import hash_password
 
 class UserCRUD(BaseCRUD):
     def __init__(self):
         super().__init__(User)
 
-    async def create(
+    async def create_client(
         self,
         db: AsyncSession,
-        email: str,
-        password: str,
-        name: str,
-        surname: str,
-        role: UserRole,
-        phone: str | None=None,
-        address: str | None=None,
-        company_name: str | None=None
+        client_create: ClientCreate
     ) -> User:
         user = User(
-            email=email,
-            password_hash=password,
-            name=name,
-            surname=surname,
-            role=role
+            id=client_create.id,
+            name=client_create.name,
+            surname=client_create.surname,
         )
 
-        if role == UserRole.CLIENT:
-            user.client_profile = ClientProfile(phone=phone)
-        elif role == UserRole.PARTNER:
-            user.partner_profile = PartnerProfile(
-                phone=phone,
-                company_name=company_name,
-                address=address
-            )
-
-        user.cart = Cart()
+        user.client_profile = Client(
+            phone=client_create.phone
+        )
 
         db.add(user)
         await db.flush() 
         await db.refresh(user)
         return user
 
-    async def get_by_email(
+    async def create_partner(
         self,
         db: AsyncSession,
-        email: str
+        partner_create: PartnerCreate
     ) -> User:
-        stmt = select(User).where(User.email == email)
-        return await db.scalar(stmt)
+        user = User(
+            id=partner_create.id,
+            name=partner_create.name,
+            surname=partner_create.surname,
+        )
 
-    
+        user.partner_profile = Partner(
+            phone=partner_create.phone,
+            company_name=partner_create.company_name,
+            address=partner_create.address
+        )
+
+        db.add(user)
+        await db.flush()
+        await db.refresh(user)
+        return user

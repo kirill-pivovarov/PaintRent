@@ -5,10 +5,10 @@ from sqlalchemy.orm import selectinload
 from uuid import UUID
 from typing import List
 
-from GatewayService.app.api.deps import get_db, get_current_user, require_role
-from GatewayService.app.db.crud.order import OrderCRUD
-from GatewayService.app.db.model import User, UserRole, Order, Painting, PaintingStatus, OrderItemType, OrderStatus
-from GatewayService.app.schemas.order import OrderCreate, OrderRead
+from app.api.deps import get_db, get_current_user, require_role
+from app.db.crud.order import OrderCRUD
+from app.db.model import User, UserRole, Order, Painting, PaintingStatus, OrderItemType, OrderStatus
+from app.schemas.order import OrderCreate, OrderRead
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 

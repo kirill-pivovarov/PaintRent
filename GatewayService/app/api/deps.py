@@ -1,69 +1,46 @@
-from typing import AsyncGenerator, Callable, Awaitable
-from uuid import UUID
+import json
+from datetime import datetime, timezone
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends, HTTPException, status
+from jose import JWTError, ExpiredSignatureError
+from pydantic import ValidationError
 from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, status, Request
 
-from GatewayService.app.db.connection import AsyncSessionLocal
-from GatewayService.app.core.security import decode_token
-from GatewayService.app.db.crud.user import UserCRUD
-from GatewayService.app.db.model import User, UserRole
+from app.settings import get_settings
+from app.db import UserRole, User
+from app.schemas import JWTPayload
+from app.services.security import decode_token
 
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Зависимость (Dependency) для получения сессии БД.
-    FastAPI вызывает её перед каждым запросом.
-    """
-    async with AsyncSessionLocal() as session:
-        try:
-            # Отдаем сессию в эндпоинт (код после yield выполнится только после завершения эндпоинта)
-            yield session
-            # Если запрос прошел без ошибок — сохраняем изменения (коммит)
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-
-#  OAuth2PasswordBearer is used to extract the token from the request header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
-async def get_current_user(
-        token: str = Depends(oauth2_scheme),
-        db: AsyncSession = Depends(get_db),
-) -> User:
-    """Достает текущего пользователя из токена."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_jwt_payload(
+    token=Depends(oauth2_scheme)
+) -> JWTPayload:
     try:
-        payload = decode_token(token)
-        user_id_str: str = payload.get("sub")
-        if user_id_str is None:
-            raise credentials_exception
-        user_id = UUID(user_id_str)
+        return decode_token(token)
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token is expired.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    except JWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token." + str(e),
+            headers={"WWW-Authenticate": "Bearer"}
+        )
 
-    except Exception:
-        raise credentials_exception
-
-    user = await UserCRUD().get_by_id(db, user_id)
-    if user is None:
-        raise credentials_exception
-
-    return user
-
-def require_role(*roles: UserRole):
-    """Фабрика зависимостей: пропускает только пользователей с одной из указанных ролей."""
-    async def role_checker(
-            current_user: User = Depends(get_current_user)
-    ) -> User:
-        if current_user.role not in roles:
+def require_role(*allowed_roles: UserRole):
+    """
+    Фабрика зависимостей: проверяет, что текущий пользователь обладает одной из разрешенных ролей.
+    """
+    async def role_checker(jwt_payload: JWTPayload = Depends(get_jwt_payload)) -> JWTPayload:
+        if jwt_payload.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have permission to perform this action"
+                detail="Недостаточно прав для доступа к этому разделу"
             )
-        return current_user
+        return jwt_payload
+
     return role_checker

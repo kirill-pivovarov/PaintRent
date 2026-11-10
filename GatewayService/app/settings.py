@@ -1,20 +1,30 @@
+from functools import lru_cache
+from datetime import timedelta
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import computed_field
+from pydantic import computed_field, SecretStr
+
 
 class Settings(BaseSettings):
-    DB_HOST: str
-    DB_PORT: str
-    DB_NAME: str
-    DB_USER: str
-    DB_PASSWORD: str
-    SECRET_KEY: str
+    db_host: str
+    db_port: str
+    db_name: str
+    db_user: str
+    db_password: str
 
+    secret_key: SecretStr
+
+    refresh_token_ttl: timedelta = timedelta(days=30)
+    access_token_ttl: timedelta = timedelta(minutes=15)
+    access_token_algorithm: str = "HS256"
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @computed_field
     @property
-    def DATABASE_URL(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+    def db_url(self) -> str:
+        return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
-settings = Settings()
 
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
