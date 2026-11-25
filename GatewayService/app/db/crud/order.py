@@ -1,11 +1,22 @@
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import update,select
+from sqlalchemy import update, select, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, status
 
-from app.db.model import Order, OrderStatus, OrderItem, OrderItemStatus, PaintingStatus, OrderItemType, Painting
+from app.db.model import (
+    Order, 
+    OrderStatus, 
+    OrderItem, 
+    OrderItemStatus, 
+    PaintingStatus, 
+    OrderItemType, 
+    Painting,
+    Cart,
+    CartItem
+)
 from app.db.crud.base import BaseCRUD
 
 
@@ -13,19 +24,81 @@ class OrderCRUD(BaseCRUD[Order]):
     def __init__(self):
         super().__init__(Order)
 
-    async def create(self,
-                     db: AsyncSession,
-                     *,
-                     customer_id: UUID,
-                     status: OrderStatus = OrderStatus.CREATED,
-                     ) -> Order:
-        order = Order(customer_id=customer_id, status=status, )
-        db.add(order)
+    async def create_order_from_cart(self, db: AsyncSession, user_id: UUID) -> Order:
+        # 1. Загружаем корзину со всеми позициями и картинами
+        stmt = (
+            select(Cart)
+            .where(Cart.user_id == user_id)
+            .options(
+                selectinload(Cart.items).selectinload(CartItem.painting)
+            )
+        )
+        cart = (await db.execute(stmt)).scalar_one_or_none()
 
-        await db.flush()
-        await db.refresh(order)
+        if not cart or not cart.items:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Корзина пуста. Невозможно оформить заказ."
+            )
 
-        return order
+        total_order_price = Decimal("0.00")
+        order_items_to_create = []
+
+        # 2. Проверяем доступность и рассчитываем цены для каждой картины
+        for cart_item in cart.items:
+            painting = cart_item.painting
+
+            # Проверка: доступна ли картина?
+            if painting.status != PaintingStatus.AVAILABLE:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Картина '{painting.title}' более недоступна для заказа."
+                )
+
+            # Расчет стоимости позиции
+            if cart_item.rental_type == OrderItemType.PURCHASE:
+                item_price = painting.price
+                # Если покупка — картина будет продана насовсем
+                painting.status = PaintingStatus.SOLD
+            else:
+                # Аренда: считаем дни
+                days = (cart_item.rental_end_date - cart_item.rental_begin_date).days
+                if days <= 0:
+                    days = 1
+                item_price = painting.rent_price * Decimal(days)
+                # Картина переходит в статус арендованной
+                painting.status = PaintingStatus.RENTED
+
+            total_order_price += item_price
+
+            # Создаем объект позиции заказа со слепком данных
+            order_item = OrderItem(
+                painting_id=painting.id,
+                type=cart_item.rental_type,
+                price=item_price,
+                status=OrderStatus.CREATED,
+                rental_begin_date=cart_item.rental_begin_date,
+                rental_end_date=cart_item.rental_end_date,
+            )
+            order_items_to_create.append(order_item)
+
+        # 3. Создаем сам Заказ
+        new_order = Order(
+            customer_id=user_id,
+            status=OrderStatus.CREATED,
+            total_price=total_order_price,
+            items=order_items_to_create
+        )
+        db.add(new_order)
+
+        # 4. Очищаем корзину клиента
+        await db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
+
+        # 5. Фиксируем все изменения одной транзакцией
+        await db.commit()
+        await db.refresh(new_order, attribute_names=["items"])
+
+        return new_order
 
 
     async def update_order(self,
@@ -161,7 +234,6 @@ class OrderCRUD(BaseCRUD[Order]):
         stmt = (
             select(Order)
             .where(Order.customer_id == customer_id)
-            .options(selectinload(Order.items))  # Подгружаем позиции
             .order_by(Order.created_at.desc())
         )
         result = await db.execute(stmt)

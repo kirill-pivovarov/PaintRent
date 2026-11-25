@@ -15,7 +15,7 @@ class SignUpForm(BaseModel):
     @field_validator("role", mode="before")
     def role_checker(cls, v: str):
         if v.upper() in [item.value for item in UserRole]:
-            return v
+            return v.upper()
         raise ValueError("There is no such role.")
 
 

@@ -6,7 +6,11 @@ from .user import (
     PartnerProfile,
     PartnerCreate,
     ClientOnboardingForm,
-    PartnerOnboardingForm
+    PartnerOnboardingForm,
+    ClientUpdate,
+    PartnerUpdate,
+    PartnerRead,
+    ClientRead
 )
 
 __all__ = [
@@ -18,4 +22,8 @@ __all__ = [
     "ClientCreate",
     "PartnerProfile",
     "PartnerCreate",
+    "ClientUpdate",
+    "PartnerUpdate",
+    "ClientRead",
+    "PartnerRead"
 ]

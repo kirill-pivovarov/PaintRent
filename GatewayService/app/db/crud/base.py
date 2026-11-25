@@ -1,11 +1,14 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import TypeVar, Type, Optional, Generic
+from typing import TypeVar, Type, Optional, Generic, Any
 from uuid import UUID
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel
 
 from app.db.model import Base
 
 
 ModelType = TypeVar("ModelType", bound=Base)
+
 
 class BaseCRUD(Generic[ModelType]):
     def __init__(self, model: Type[ModelType]):
@@ -21,23 +24,10 @@ class BaseCRUD(Generic[ModelType]):
     async def delete(
         self,
         db: AsyncSession,
-        obj: ModelType | None
+        obj: ModelType
     ) -> bool:
         if obj is None:
             return False
         await db.delete(obj)
         await db.flush()
         return True
-
-
-    async def update(
-        self,
-        db: AsyncSession,
-        obj: ModelType
-    ) -> ModelType:
-        if obj is None:
-            raise ValueError("update: obj is None")
-        merged = await db.merge(obj)
-
-        await db.flush()
-        return merged

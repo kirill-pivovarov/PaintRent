@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.model import Painting, PaintingStatus
 from app.db.crud.base import BaseCRUD
+from app.schemas.painting import PaintingUpdate, PaintingCreate
 
 
 async def painting_list(
@@ -36,22 +37,9 @@ class PaintingCRUD(BaseCRUD[Painting]):
         self,
         db: AsyncSession,
         partner_id: UUID,
-        title: str,
-        author: str,
-        price,
-        rent_price,
-        creation_year: int | None = None,
-        status: PaintingStatus = PaintingStatus.AVAILABLE,
+        painting_create: PaintingCreate
     ) -> Painting:
-        painting = Painting(
-            partner_id=partner_id,
-            title=title,
-            author=author,
-            creation_year=creation_year,
-            price=price,
-            rent_price=rent_price,
-            status=status,
-        )
+        painting = Painting(partner_id=partner_id, **painting_create.model_dump(exclude_unset=True))
         db.add(painting)
 
         await db.flush()
@@ -59,15 +47,20 @@ class PaintingCRUD(BaseCRUD[Painting]):
 
         return painting
 
-    async def update_paintings(self, db, painting_id, **kwargs):
-        painting = await self.get_by_id(db, painting_id)
+    async def update(self, db, id, painting_update: PaintingUpdate) -> Painting:
+        painting = await self.get_by_id(db, id)
 
         if painting is None:
             return None
 
-        for k, v in kwargs.items():
-            setattr(painting, k, v)
+        stmt = update(Painting)\
+            .where(Painting.id == id)\
+            .values(
+                **painting_update.model_dump(exclude_unset=True)
+            )\
+            .returning(Painting)
 
+        painting = (await db.execute(stmt)).scalar_one_or_none()
         await db.flush()
         return painting
 
@@ -88,3 +81,6 @@ class PaintingCRUD(BaseCRUD[Painting]):
 
     async def update_status(self, db, painting_id, status) -> Painting | None:
         return await self.update_paintings(db, painting_id, status=status)
+
+
+painting_crud = PaintingCRUD()

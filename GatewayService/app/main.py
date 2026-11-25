@@ -3,7 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from app.db.deps import get_db
 
-from app.api.routers_v1.user import clients_router
+from app.api.routers_v1.user import clients_router, partners_router
+from app.api.routers_v1.paintings import router as paintings_router
+from app.api.routers_v1.cart import router as carts_router
+from app.api.routers_v1.media import router as media_router
+from app.api.routers_v1.orders import router as order_router
 
 # Создаем приложение FastAPI
 app = FastAPI(
@@ -28,3 +32,8 @@ async def db_check(db: AsyncSession = Depends(get_db)):
     }
 
 app.include_router(clients_router, prefix="/api/v1")
+app.include_router(partners_router, prefix="/api/v1")
+app.include_router(paintings_router, prefix="/api/v1")
+app.include_router(carts_router, prefix="/api/v1")
+app.include_router(media_router, prefix="/api/v1")
+app.include_router(order_router, prefix="/api/v1")

@@ -10,16 +10,14 @@ class PaintingBase(BaseModel):
     """Базовые поля картины."""
     title: str
     author: str
-    creation_year: int = Field(..., ge=1800)
+    creation_year: int = Field(..., ge=0)
     # description
-    price: Decimal = Field(..., gt=0)
-    rent_price: Decimal = Field(..., gt=0)
+    price: Decimal | None = Field(None, ge=0)
+    rent_price: Decimal | None = Field(None, ge=0)
 
 
 class PaintingCreate(PaintingBase):
-    """Схема для создания."""
     pass
-
 
 class PaintingUpdate(BaseModel):
     """Схема для обновления.

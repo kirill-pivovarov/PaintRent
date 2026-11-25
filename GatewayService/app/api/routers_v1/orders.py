@@ -5,79 +5,45 @@ from sqlalchemy.orm import selectinload
 from uuid import UUID
 from typing import List
 
-from app.api.deps import get_db, get_current_user, require_role
+from app.api.deps import get_jwt_payload, require_role
+from app.db.deps import get_db
 from app.db.crud.order import OrderCRUD
-from app.db.model import User, UserRole, Order, Painting, PaintingStatus, OrderItemType, OrderStatus
+from app.db.model import User, UserRole, Order, Painting, PaintingStatus, OrderItemType, OrderStatus, OrderItemStatus
 from app.schemas.order import OrderCreate, OrderRead
+from app.schemas import JWTPayload
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
+order_crud = OrderCRUD()
 
-# ЗАГЛУШКА: имитация того, что корзина уже работает
-async def get_paintings_from_cart(db: AsyncSession, user_id: UUID) -> list[Painting]:
-    """
-    В реальности здесь будет запрос к CartCRUD.
-    Пока мы просто достаем все доступные картины из базы (для тестов).
-    """
-    result = await db.execute(
-        select(Painting).where(Painting.status == PaintingStatus.AVAILABLE).limit(1)
-    )
-    return list(result.scalars().all())
-
-
-@router.post("/", response_model=OrderRead, status_code=status.HTTP_201_CREATED)
-async def create_order(
-        data: OrderCreate,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(require_role(UserRole.CLIENT))
-):
-    """
-    Создать заказ из корзины.
-    (Корзина пока имитируется, но логика заказа полностью рабочая).
-    """
-    crud = OrderCRUD()
-
-    paintings = await get_paintings_from_cart(db, current_user.id)
-    if not paintings:
-        raise HTTPException(status_code=400, detail="Cart is empty or no available paintings")
-
-    try:
-        order = await crud.create_order_from_paintings(
-            db,
-            customer_id=current_user.id,
-            paintings=paintings,
-            order_type=data.type
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    # 3. Подгружаем заказ с позициями для ответа
-    # (нам нужно обновить объект, чтобы подтянулись created_at и items)
-    stmt = select(Order).where(Order.id == order.id).options(selectinload(Order.items))
-    result = await db.execute(stmt)
-    return result.scalar_one()
-
+@router.post("/form", response_model=OrderRead, status_code=status.HTTP_200_OK)
+async def form_order(
+    db: AsyncSession = Depends(get_db),
+    jwt_payload: JWTPayload = Depends(require_role(UserRole.CLIENT))
+) -> OrderRead:
+    order = await order_crud.create_order_from_cart(db, user_id=jwt_payload.sub)
+    return order
+    
 
 @router.get("/my", response_model=List[OrderRead])
 async def get_my_orders(
         db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(require_role(UserRole.CLIENT))
+        jwt_payload: JWTPayload = Depends(require_role(UserRole.CLIENT))
 ):
     """История заказов текущего клиента."""
-    crud = OrderCRUD()
-    return await crud.get_by_customer(db, current_user.id)
+    return await order_crud.get_by_customer(db, jwt_payload.sub)
 
 
 @router.patch("/items/{item_id}/confirm", status_code=status.HTTP_200_OK)
 async def confirm_item(
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.PARTNER))
+    jwt_payload: JWTPayload = Depends(require_role(UserRole.PARTNER))
 ):
     """Партнёр подтверждает наличие картины в заказе."""
     crud = OrderCRUD()
     try:
-        item = await crud.confirm_order_item(db, item_id, current_user.id)
+        item = await crud.confirm_order_item(db, item_id, jwt_payload.sub)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -91,13 +57,13 @@ async def confirm_item(
 async def pay_order(
         order_id: UUID,
         db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(require_role(UserRole.CLIENT))
+        jwt_payload: JWTPayload = Depends(require_role(UserRole.CLIENT))
 ):
     """Оплата заказа. Доступна только если все позиции подтверждены."""
     crud = OrderCRUD()
     order = await crud.get_by_id(db, order_id)
 
-    if not order or order.customer_id != current_user.id:
+    if not order or order.customer_id != jwt_payload.sub:
         raise HTTPException(404, "Order not found")
 
     if order.status != OrderStatus.CONFIRMED:
@@ -107,6 +73,9 @@ async def pay_order(
         )
 
     updated_order = await crud.update_status(db, order_id, OrderStatus.PAID)
+    for item in updated_order.items:
+        item.status = OrderItemStatus.PAID
+    db.flush()
     return updated_order
 
 
@@ -114,7 +83,7 @@ async def pay_order(
 async def cancel_order(
         order_id: UUID,
         db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_user)  # Может быть и клиент, и админ
+        jwt_payload: JWTPayload = Depends(require_role(UserRole.CLIENT, UserRole.ADMIN))  # Может быть и клиент, и админ
 ):
     """Отмена заказа (клиентом или админом). Картины возвращаются в каталог."""
     crud = OrderCRUD()
@@ -123,9 +92,6 @@ async def cancel_order(
     if not order:
         raise HTTPException(404, "Order not found")
 
-    if current_user.role not in (UserRole.ADMIN, UserRole.CLIENT) or \
-            (current_user.role == UserRole.CLIENT and order.customer_id != current_user.id):
-        raise HTTPException(403, "Not allowed to cancel this order")
 
     if order.status == OrderStatus.PAID:
         raise HTTPException(400, "Cannot cancel already paid order")

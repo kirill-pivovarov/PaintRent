@@ -58,40 +58,45 @@ class User(UUIDMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(100))
     surname: Mapped[str] = mapped_column(String(100))
     
-    # --- Relationships ---
-    client_profile: Mapped[Optional["Client"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan", uselist=False
-    )
-    partner_profile: Mapped[Optional["Partner"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan", uselist=False
-    )
+    type: Mapped[str] = mapped_column(String(100))
+
+    __mapper_args__ = {
+        "polymorphic_identity": "user",
+        "polymorphic_on": "type",
+    }
     
 
-
-class Client(Base):
+class Client(User):
     __tablename__ = "client_profiles"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), 
         primary_key=True
     )
     phone: Mapped[Optional[str]] = mapped_column(String(20))
 
-    # --- Relationships ---
-    user: Mapped["User"] = relationship(back_populates="client_profile")
+    __mapper_args__ = {
+        "polymorphic_identity": "client"
+    }
+    
     orders: Mapped[List["Order"]] = relationship(
-        back_populates="client", cascade="all, delete-orphan"
+        back_populates="client", 
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     cart: Mapped[Optional["Cart"]] = relationship(
-            back_populates="user", cascade="all, delete-orphan", uselist=False
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="joined",
+        uselist=False,
     )
 
 
-class Partner(Base):
+class Partner(User):
     __tablename__ = "partner_profiles"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
+    id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True
     )
@@ -100,8 +105,10 @@ class Partner(Base):
     phone: Mapped[Optional[str]] = mapped_column(String(20))
     address: Mapped[Optional[str]] = mapped_column(String(255))
 
-    # --- Relationships ---
-    user: Mapped["User"] = relationship(back_populates="partner_profile")
+    __mapper_args__ = {
+        "polymorphic_identity": "partner",
+    }
+
     paintings: Mapped[List["Painting"]] = relationship(
         back_populates="owner",
         cascade="all, delete-orphan",
@@ -115,7 +122,7 @@ class Painting(UUIDMixin, TimestampMixin, Base):
     #id, created_at, updated_at из миксинов
 
     partner_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("partner_profiles.user_id", ondelete="CASCADE"),
+        ForeignKey("partner_profiles.id", ondelete="CASCADE"),
         nullable=False, 
         index=True
     )
@@ -124,8 +131,8 @@ class Painting(UUIDMixin, TimestampMixin, Base):
     author: Mapped[str] = mapped_column(String(255), nullable=False)
     creation_year: Mapped[Optional[int]] = mapped_column(Integer)
     # description
-    price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
-    rent_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    price: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
+    rent_price: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
 
     status: Mapped[PaintingStatus] = mapped_column(
         SQLEnum(PaintingStatus, name="painting_status_enum"),
@@ -133,14 +140,10 @@ class Painting(UUIDMixin, TimestampMixin, Base):
         index=True
     )
 
-    created_at: Mapped[datetime] = mapped_column(
-        server_default=text("TIMEZONE('utc', NOW())")
-    )
-
     # --- Relationships ---
-    owner: Mapped["Partner"] = relationship(back_populates="paintings")
-    order_items: Mapped[List["OrderItem"]] = relationship(back_populates="painting")
-    cart_items: Mapped[List["CartItem"]] = relationship(back_populates="painting")
+    owner: Mapped["Partner"] = relationship(back_populates="paintings", lazy="selectin")
+    order_items: Mapped[List["OrderItem"]] = relationship(back_populates="painting", lazy="selectin")
+    cart_items: Mapped[List["CartItem"]] = relationship(back_populates="painting", lazy="selectin")
 
 
 class Order(UUIDMixin, TimestampMixin, Base):
@@ -148,7 +151,7 @@ class Order(UUIDMixin, TimestampMixin, Base):
 
     #id, created_at, updated_at из миксинов
     customer_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("client_profiles.user_id", ondelete="RESTRICT"), 
+        ForeignKey("client_profiles.id", ondelete="RESTRICT"), 
         nullable=False, 
         index=True
     )
@@ -165,7 +168,8 @@ class Order(UUIDMixin, TimestampMixin, Base):
     client: Mapped["Client"] = relationship(back_populates="orders")
     items: Mapped[List["OrderItem"]] = relationship(
         back_populates="order", 
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -193,11 +197,14 @@ class OrderItem(UUIDMixin, Base):
         default=OrderItemType.RENT
     )
 
+    rental_begin_date: Mapped[Optional[date]] = mapped_column(nullable=True)
+    rental_end_date: Mapped[Optional[date]] = mapped_column(nullable=True)
+
     price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
 
     # --- Relationships ---
     order: Mapped["Order"] = relationship(back_populates="items")
-    painting: Mapped["Painting"] = relationship(back_populates="order_items")
+    painting: Mapped["Painting"] = relationship(back_populates="order_items", lazy="joined")
 
 
 class Cart(UUIDMixin, TimestampMixin, Base):
@@ -205,12 +212,12 @@ class Cart(UUIDMixin, TimestampMixin, Base):
 
     #id, created_at, updated_at из миксинов
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("client_profiles.user_id", ondelete="CASCADE"),
+        ForeignKey("client_profiles.id", ondelete="CASCADE"),
         unique=True
     )
 
     # --- Relationships ---
-    user: Mapped["Client"] = relationship(back_populates="cart")
+    user: Mapped["Client"] = relationship(back_populates="cart", lazy="joined")
     items: Mapped[List["CartItem"]] = relationship(
         back_populates="cart",
         cascade="all, delete-orphan",
@@ -242,5 +249,5 @@ class CartItem(UUIDMixin, TimestampMixin, Base):
     rental_end_date: Mapped[Optional[date]] = mapped_column()
 
     # --- Relationships ---
-    cart: Mapped["Cart"] = relationship(back_populates="items")
-    painting: Mapped["Painting"] = relationship(back_populates="cart_items")
+    cart: Mapped["Cart"] = relationship(back_populates="items", lazy="joined")
+    painting: Mapped["Painting"] = relationship(back_populates="cart_items", lazy="joined")
